@@ -10,14 +10,42 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.salfino.naviblind_110217.MainActivity"
-    android:background="@color/colorPrimaryDark">
+    android:background="#302e2e">
 
     <Button
         android:text="Get Location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="37dp"
+        android:id="@+id/locationButton"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="35dp"
-        android:id="@+id/button"/>
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="46dp"
+        android:onClick="getLocation"/>
+
+    <Button
+        android:text="Stop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/stopButton"
+        android:layout_alignBaseline="@+id/locationButton"
+        android:layout_alignBottom="@+id/locationButton"
+        android:layout_toEndOf="@+id/locationButton"
+        android:layout_marginStart="46dp"
+        android:onClick="stopLocation"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:id="@+id/myscrollView"
+        android:layout_below="@+id/locationButton"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="67dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/mytextView"
+            />
+    </ScrollView>
 </RelativeLayout>
