@@ -10,37 +10,36 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.salfino.naviblind_110217.MainActivity"
-    android:background="#302e2e">
+    android:background="@color/colorPrimaryDark">
 
     <Button
-        android:text="Get Location"
+        android:text="Start Log"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="37dp"
         android:id="@+id/locationButton"
+        android:layout_marginStart="48dp"
+        android:onClick="getLocation"
         android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="46dp"
-        android:onClick="getLocation"/>
+        android:layout_alignParentStart="true"/>
 
     <Button
-        android:text="Stop"
+        android:text="Stop Log"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/stopButton"
-        android:layout_alignBaseline="@+id/locationButton"
-        android:layout_alignBottom="@+id/locationButton"
-        android:layout_toEndOf="@+id/locationButton"
-        android:layout_marginStart="46dp"
-        android:onClick="stopLocation"/>
+        android:onClick="stopLocation"
+        android:layout_marginStart="56dp"
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/locationButton"/>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:id="@+id/myscrollView"
+        android:layout_marginTop="26dp"
         android:layout_below="@+id/locationButton"
         android:layout_alignParentStart="true"
-        android:layout_marginTop="67dp">
+        android:layout_above="@+id/launchPlan">
 
         <TextView
             android:layout_width="match_parent"
@@ -48,4 +47,21 @@
             android:id="@+id/mytextView"
             />
     </ScrollView>
+
+    <Button
+        android:text="Launch Floor Plan"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/launchPlan"
+        android:layout_marginBottom="38dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"/>
+
+    <TextView
+        android:text="Lon, Lat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/coordinates"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"/>
 </RelativeLayout>

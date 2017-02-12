@@ -2,17 +2,25 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.example.salfino.naviblind_110217">
 
-    <uses-feature android:name="android.hardware.sensor.accelerometer"
-                  android:required="true" />
-    <uses-feature android:name="android.hardware.sensor.compass"
-                  android:required="true" />
-    <uses-feature android:name="android.hardware.sensor.gyroscope"
-                  android:required="true" />
-    <uses-feature android:name="android.hardware.wifi"
-                  android:required="true" />
+    <uses-feature
+        android:name="android.hardware.sensor.accelerometer"
+        android:required="true"/>
+    <uses-feature
+        android:name="android.hardware.sensor.compass"
+        android:required="true"/>
+    <uses-feature
+        android:name="android.hardware.sensor.gyroscope"
+        android:required="true"/>
+    <uses-feature
+        android:name="android.hardware.wifi"
+        android:required="true"/>
 
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
 
     <application
         android:allowBackup="true"
@@ -27,12 +35,19 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
         <meta-data
             android:name="com.indooratlas.android.sdk.API_KEY"
             android:value="44f39ec4-34f3-461d-af06-1d7a4338151b"/>
         <meta-data
             android:name="com.indooratlas.android.sdk.API_SECRET"
             android:value="Ei88jUrYJI99JVXmzd4+NfT0u3TdNqyk57cB+NgrD4YqtvvpwYag6bPGKo9G9yOr9pDF2hEZZKr/1ycKJ72a2ySTd/KFyBbNZ1a4vL1L5r5xeYk5ixxc9c9EtJL7tg=="/>
+
+        <activity android:name=".FloorPlanActivity">
+        </activity>
+
+        <activity android:name=".TestActivity">
+        </activity>
     </application>
 
 </manifest>

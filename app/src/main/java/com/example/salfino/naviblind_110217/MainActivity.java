@@ -1,6 +1,7 @@
 package com.example.salfino.naviblind_110217;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -25,25 +26,17 @@ public class MainActivity extends AppCompatActivity {
     private final int CODE_PERMISSIONS = 1;
     //static final String FASTEST_INTERVAL = "fastestInterval";
     //static final String SHORTEST_DISPLACEMENT = "shortestDisplacement";
+    // private long mFastestInterval = -1L;
+    // private float mShortestDisplacement = -1f;
     public IALocationManager mIALocationManager;
     private Button mLocationButton;
     private Button mStopButton;
+    private Button mlaunchFloorPlan;
     private TextView mLogging;
+    private TextView mTextView;
     private ScrollView mScrollView;
     private static final String TAG = "IndoorAtlas";
     private long mRequestStartTime;
-   // private long mFastestInterval = -1L;
-   // private float mShortestDisplacement = -1f;
-
-    /*public void getLocation (View v){
-        Toast.makeText(MainActivity.this, "getLocation Button pressed!", Toast.LENGTH_SHORT).show();
-        mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-    }
-
-    public void stopLocation (View v){
-        Toast.makeText(MainActivity.this, "stopLocation Button pressed!", Toast.LENGTH_SHORT).show();
-        mIALocationManager.removeLocationUpdates(mIALocationListener);
-    }*/
 
     private void logText(String msg) {
         double duration = mRequestStartTime != 0
@@ -56,6 +49,16 @@ public class MainActivity extends AppCompatActivity {
         mScrollView.smoothScrollBy(0, mLogging.getBottom());
     }
 
+    private void displayText () {
+
+        mLogging.setText("Welcome to the Department of Computer Science.You are now" +
+                " on the second floor of the extension building.For room number two six" +
+                " seven, walk to your right towards the main door,this is normally open" +
+                " but please exercise caution");
+        mLogging.setTextSize(30);
+        mLogging.setTextColor(0xFFFF4046);
+        mScrollView.smoothScrollBy(0, mLogging.getBottom());
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,7 +77,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mLocationButton = (Button) findViewById(R.id.locationButton);
         mStopButton = (Button) findViewById(R.id.stopButton);
+        mlaunchFloorPlan = (Button) findViewById(R.id.launchPlan);
         mLogging = (TextView) findViewById(R.id.mytextView);
+        mTextView = (TextView) findViewById(R.id.coordinates);
+        mTextView.setTextSize(30);
+        mTextView.setTextColor(0xFFFF4046);
         mScrollView = (ScrollView) findViewById(R.id.myscrollView);
 
         mIALocationManager = IALocationManager.create(this);
@@ -83,10 +90,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Toast.makeText(MainActivity.this, "getLocation Button pressed!", Toast.LENGTH_LONG).show();
-                mIALocationManager.removeLocationUpdates(mIALocationListener);
                 mRequestStartTime = SystemClock.elapsedRealtime();
                 mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-
             }
         });
 
@@ -96,8 +101,21 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "stopLocation Button pressed!", Toast.LENGTH_LONG).show();
                 mLogging.setText("");
                 mIALocationManager.removeLocationUpdates(mIALocationListener);
+                mIALocationManager.destroy();
             }
         });
+
+        mlaunchFloorPlan.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, "launch Floor Plan Button pressed!", Toast.LENGTH_LONG).show();
+                Intent i = new Intent(MainActivity.this, FloorPlanActivity.class);
+                //Intent i = new Intent(MainActivity.this, TestActivity.class);
+                startActivity(i);
+            }
+        });
+
+        displayText();
     }
 
     @Override
@@ -118,29 +136,19 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-  /*  @Override
-    public void onLocationChanged(IALocation iaLocation) {
-        Log.d(TAG, "Latitude: " + iaLocation.getLatitude());
-        Log.d(TAG, "Longitude: " +iaLocation.getLongitude());
-        Toast.makeText(MainActivity.this, "Latitude: " + iaLocation.getLatitude() + "Longitude: " + iaLocation.getLongitude(), Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onStatusChanged(String s, int i, Bundle bundle) {
-
-    }*/
 
     public IALocationListener mIALocationListener = new IALocationListener() {
       @Override
       public void onLocationChanged(IALocation iaLocation) {
-          logText(String.format(Locale.UK, "Latitude: %f, Longitude: %f",
-                  iaLocation.getLatitude(), iaLocation.getLongitude()));
-          Toast.makeText(MainActivity.this, "Latitude: " + iaLocation.getLatitude() + "Longitude: " + iaLocation.getLongitude(), Toast.LENGTH_SHORT).show();
+          /*logText(String.format(Locale.UK, "Latitude: %f, Longitude: %f",
+                  iaLocation.getLatitude(), iaLocation.getLongitude()));*/
+          mTextView.setText(String.valueOf(iaLocation.getLatitude() + ", " + iaLocation.getLongitude()));
+          mTextView.setTextSize(40);
       }
 
       @Override
-      public void onStatusChanged(String s, int i, Bundle bundle) {
-          switch (i) {
+      public void onStatusChanged(String provider, int status, Bundle bundle) {
+          /*switch (status) {
               case IALocationManager.STATUS_CALIBRATION_CHANGED:
                   String quality = "unknown";
                   switch (bundle.getInt("quality")) {
@@ -154,10 +162,10 @@ public class MainActivity extends AppCompatActivity {
                           quality = "Excellent";
                           break;
                   }
-                  logText("Calibration Quality: " + quality);
+                  logText("Calibration Quality: " + quality + " Status Code: " + status);
                   break;
               case IALocationManager.STATUS_AVAILABLE:
-                  logText("onStatusChanged: Available");
+                  logText("onStatusChanged: Available" + " Status Code: " + status);
                   break;
               case IALocationManager.STATUS_LIMITED:
                   logText("onStatusChanged: Limited");
@@ -167,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
                   break;
               case IALocationManager.STATUS_TEMPORARILY_UNAVAILABLE:
                   logText("onStatusChanged: Temporarily unavailable");
-          }
+          }*/
 
       }
   };
@@ -181,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-       // mIALocationManager.removeLocationUpdates(mIALocationListener);
+           // mIALocationManager.removeLocationUpdates(mIALocationListener);
     }
 
     @Override
