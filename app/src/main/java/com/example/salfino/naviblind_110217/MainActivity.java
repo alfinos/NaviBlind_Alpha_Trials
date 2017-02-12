@@ -3,6 +3,7 @@ package com.example.salfino.naviblind_110217;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
@@ -58,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
         mLogging.setTextSize(30);
         mLogging.setTextColor(0xFFFF4046);
         mScrollView.smoothScrollBy(0, mLogging.getBottom());
+        MediaPlayer mPlayer = MediaPlayer.create(this,R.raw.welcome);
+        mPlayer.start();
     }
 
     @Override
