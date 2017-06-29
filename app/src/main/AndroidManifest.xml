@@ -14,6 +14,13 @@
     <uses-feature
         android:name="android.hardware.wifi"
         android:required="true"/>
+    <uses-feature
+        android:name="android.hardware.output"
+        android:required="true"/>
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="true"/>
+
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -21,6 +28,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
     <application
         android:allowBackup="true"
@@ -28,7 +36,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity" android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -43,7 +51,7 @@
             android:name="com.indooratlas.android.sdk.API_SECRET"
             android:value="Ei88jUrYJI99JVXmzd4+NfT0u3TdNqyk57cB+NgrD4YqtvvpwYag6bPGKo9G9yOr9pDF2hEZZKr/1ycKJ72a2ySTd/KFyBbNZ1a4vL1L5r5xeYk5ixxc9c9EtJL7tg=="/>
 
-        <activity android:name=".FloorPlanActivity">
+        <activity android:name=".FloorPlanActivity" android:screenOrientation="portrait">
         </activity>
 
         <activity android:name=".TestActivity">

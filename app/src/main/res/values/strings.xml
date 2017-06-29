@@ -1,3 +1,51 @@
 <resources>
-    <string name="app_name">NaviBlind</string>
+    <string name="app_name">NaviBlind Two</string>
+    <string name="floor_plan">Floor Plan</string>
+    <string name="debug">Launch Debug</string>
+    <string name="test_speech">Test Speech</string>
+
+    <string name="welcome">Welcome to the Department of Computer Science. You are now
+                on the second floor of the extension building.For room number two six
+                seven, walk to your right towards the main door, this is normally open
+                but please exercise caution.</string>
+
+    <string name="main_door">Have you gone through the main fire exit door in front of you?
+                Please say Yes when ready.</string>
+
+    <string name="after_main_door">Keep walking forward for about ten (10) steps. Then turn
+                cautiously to the right and take the sub-level stairways containing four steps
+                down towards the main corridor.</string>
+
+    <string name="four_steps">Can you confirm the presence of the four step sub-level stairway
+                in front of you? Please say Yes when ready.</string>
+
+    <string name="narrow_corridor">Keep walking forward and take the four step sub-level stairway
+                down to the main corridor. This corridor is narrow and long, keep walking forward
+                for about twenty (20) steps. At the end of this corridor take the sub-level
+                stairways containing two steps up and turn right towards room two six seven (267).
+                </string>
+
+    <string name="two_steps">Can you confirm the presence of the two step sub-level stairway in
+                front of you? Please say Yes when ready.</string>
+
+    <string name="at_two_steps">Take the sub-level stairways containing two steps up and turn right
+                towards room two six seven (267). Keep walking forward for about ten (10) more
+                steps. Room two six seven (267) is at the end of this corridor, to the left passed a
+                narrow open doorway.</string>
+
+    <string name="end_point">You have arrived to room two six seven (267) which has its door to your
+                left.</string>
+
+    <string name="response_yes">Your response was yes.</string>
+
+    <string name="response_no">Your response was no.</string>
+
+    <string name="yes_or_no">Please say yes or no only.</string>
+
+    <string name="repeat">Would you like me to repeat?</string>
+
+    <string name="please_repeat">Sorry I did not quite catch that. Please repeat your answer as yes
+                or no only</string>
+
+
 </resources>
