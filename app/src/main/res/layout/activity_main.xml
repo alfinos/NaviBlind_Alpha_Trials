@@ -13,26 +13,28 @@
     android:background="@color/colorPrimaryDark">
 
     <Button
-        android:text="YES"
+        android:id="@+id/locationButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/locationButton"
-        android:layout_marginStart="25dp"
-        android:onClick="getLocation"
         android:layout_above="@+id/coordinates"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="59dp"/>
+        android:layout_marginBottom="59dp"
+        android:layout_marginStart="25dp"
+        android:onClick="getLocation"
+        android:text="YES"
+        android:visibility="invisible"/>
 
     <Button
-        android:text="NO"
+        android:id="@+id/stopButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/stopButton"
-        android:onClick="stopLocation"
         android:layout_alignBaseline="@+id/locationButton"
         android:layout_alignBottom="@+id/locationButton"
         android:layout_alignParentEnd="true"
-        android:layout_marginEnd="27dp"/>
+        android:layout_marginEnd="27dp"
+        android:onClick="stopLocation"
+        android:text="NO"
+        android:visibility="invisible"/>
 
     <ScrollView
         android:layout_width="match_parent"

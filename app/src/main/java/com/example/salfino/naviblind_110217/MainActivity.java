@@ -3,8 +3,10 @@ package com.example.salfino.naviblind_110217;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.SystemClock;
@@ -46,7 +48,11 @@ public class MainActivity extends AppCompatActivity {
             R.string.response_no,
             R.string.yes_or_no,
             R.string.repeat,
-            R.string.please_repeat
+            R.string.please_repeat,
+            R.string.welcome_two,
+            R.string.empty,
+            R.string.no_service,
+            R.string.try_again
     };
 
     private int[] audioCommands = {
@@ -62,7 +68,11 @@ public class MainActivity extends AppCompatActivity {
             R.raw.response_yes,
             R.raw.two_steps,
             R.raw.welcomemale,
-            R.raw.yes_or_no
+            R.raw.yes_or_no,
+            R.raw.welcomemaletwo,
+            R.raw.alert,
+            R.raw.service_not_ready,
+            R.raw.try_again
     };
     //Waypoint geo-coordinates in decimal degrees (DD)
     private static final double GR_OFFICE_LAT = 51.52222145;
@@ -79,9 +89,10 @@ public class MainActivity extends AppCompatActivity {
     private final int MY_CODE_PERMISSIONS = 1;
     //static final String FASTEST_INTERVAL = "fastestInterval";
     //static final String SHORTEST_DISPLACEMENT = "shortestDisplacement";
-    private long DEFAULT_INTERVAL = 500L;
-    private float DEFAULT_DISPLACEMENT = 1.5f;
+    private long DEFAULT_INTERVAL = 100L;//milliseconds
+    private float DEFAULT_DISPLACEMENT = 1f;//meters
     public IALocationManager mIALocationManager;
+    public MediaPlayer mPlayer;
     public SpeechRecognizer mSR;
     //private Button mLocationButton;
     //private Button mStopButton;
@@ -93,17 +104,97 @@ public class MainActivity extends AppCompatActivity {
     private ScrollView mScrollView;
     private static final String TAG = "IndoorAtlas";
     private long mRequestStartTime;
-    private int myFlag = 2;
+    private int myStartFlag = 2;
+    private boolean calibrationOK = false;
+    private boolean statusOK = false;
+    private boolean permissionOK = false;
 
     private void logText(String msg) {
         double duration = mRequestStartTime != 0
                 ? (SystemClock.elapsedRealtime() - mRequestStartTime) / 1e3
                 : 0d;
         //mLogging.append(String.format(Locale.UK, "\n[%06.2f]: %s", duration, msg));
-        mLogging.setText(String.format(Locale.UK, "\n[%06.2f]:\n %s", duration, msg));
-        mLogging.setTextSize(40);
+        //mLogging.setText(String.format(Locale.UK, "\n[%06.2f]:\n %s", duration, msg));
+        mLogging.setText(String.format(Locale.UK, "\n %s", msg));
+        mLogging.setTextSize(35);
         mLogging.setTextColor(0xFFFF8290);
         mScrollView.smoothScrollBy(0, mLogging.getBottom());
+    }
+
+    private void introduction(){
+        //displayTextTwo(14,14);//Pre-audio alert
+        new CountDownTimer(6000, 1000){//10 second count down timer
+            @Override
+            public void onTick(long millisUntilFinished) {
+                Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFinish() {
+                displayTextTwo(14,14);//Pre-audio alert
+                new CountDownTimer(3000, 1000){//10 second count down timer
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        displayTextTwo(13,13);//Welcome audio at start of application
+                        new CountDownTimer(22000, 1000){//10 second count down timer
+                            @Override
+                            public void onTick(long millisUntilFinished) {
+                                Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onFinish() {
+                                Toast.makeText(MainActivity.this, "launch Speech Recognition debug.", Toast.LENGTH_LONG).show();
+                                startVoiceRecognitionActivity();//Just temporary action
+                            }
+                        }.start();
+                    }
+                }.start();
+            }
+        }.start();
+    }
+
+    private void tryAgain(){
+        //displayTextTwo(14,14);//Pre-audio alert
+        new CountDownTimer(3000, 1000){//10 second count down timer
+            @Override
+            public void onTick(long millisUntilFinished) {
+                Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFinish() {
+                displayTextTwo(14,14);//Pre-audio alert
+                new CountDownTimer(3000, 1000){//10 second count down timer
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        displayTextTwo(16,16);//Try again audio
+                        new CountDownTimer(6000, 1000){//10 second count down timer
+                            @Override
+                            public void onTick(long millisUntilFinished) {
+                                Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onFinish() {
+                                Toast.makeText(MainActivity.this, "launch Speech Recognition debug.", Toast.LENGTH_LONG).show();
+                                startVoiceRecognitionActivity();//Just temporary action
+                            }
+                        }.start();
+                    }
+                }.start();
+            }
+        }.start();
     }
 
     private void displayText (int textCommandIndex, String voiceCommandURL) {
@@ -115,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
         mScrollView.smoothScrollBy(0, mLogging.getBottom());
         //MediaPlayer mPlayer = MediaPlayer.create(this,R.raw.welcome);
         try {
-            MediaPlayer mPlayer = new MediaPlayer();
+            mPlayer = new MediaPlayer();
             mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mPlayer.setDataSource(voiceCommandURL);
             mPlayer.prepare();
@@ -137,9 +228,29 @@ public class MainActivity extends AppCompatActivity {
         mScrollView.smoothScrollBy(0, mLogging.getBottom());
         //MediaPlayer mPlayer = MediaPlayer.create(this,R.raw.welcome);
         try {
-            MediaPlayer mPlayer = MediaPlayer.create(this,audioCommands[audioCommandIndex]);
-            mPlayer.start();
-
+            //mPlayer = MediaPlayer.create(this,audioCommands[audioCommandIndex]);
+            mPlayer = new MediaPlayer();
+            Uri mediaPath = Uri.parse("android.resource://" + getPackageName() + "/" + audioCommands[audioCommandIndex]);
+            mPlayer.setDataSource(getApplicationContext(),mediaPath);
+            AudioAttributes myAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build();
+            mPlayer.setAudioAttributes(myAttributes);
+            mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {//Running media player on a separate UI thread
+                @Override
+                public void onPrepared(MediaPlayer mp) {//called when media is done preparing
+                    mp.start();
+                }
+            });
+            mPlayer.prepareAsync();//Prepares media in the background
+            //mPlayer.start();
+            mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    
+                }
+            });
         } catch (Exception e) {
             Toast.makeText(MainActivity.this, "Check Wi-Fi connection or audio file missing!!", Toast.LENGTH_LONG).show();
             //MediaPlayer mPlayer = MediaPlayer.create(this,R.raw.welcome);
@@ -181,11 +292,14 @@ public class MainActivity extends AppCompatActivity {
                                                       .withLongitude(START_POSITION_LON)
                                                       .withAccuracy(75f)
                                                       .withFloorLevel(2).build();
-        mIALocationManager.setLocation(location);//Explicitly set the
+        mIALocationManager.setLocation(location);//Explicitly set the the initial fix as specified above
+        Toast.makeText(MainActivity.this, "DEBUG::First fix location set...", Toast.LENGTH_LONG).show();
 
         IALocationRequest request = IALocationRequest.create();
+        request.setPriority(IALocationRequest.PRIORITY_HIGH_ACCURACY);
         request.setFastestInterval(DEFAULT_INTERVAL);//Explicitly set the fastest interval for location updates in milliseconds
         request.setSmallestDisplacement(DEFAULT_DISPLACEMENT);//Set the minimum displacement between location updates in meters
+        Toast.makeText(MainActivity.this, "DEBUG::Interval & Displacement set...", Toast.LENGTH_LONG).show();
 
         //Create a new instance of SpeechRecognizer using its createSpeechRecognizer() method
         mSR = SpeechRecognizer.createSpeechRecognizer(this);
@@ -195,16 +309,18 @@ public class MainActivity extends AppCompatActivity {
         mYes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                myFlag = 1;
+
             }
         });
 
         mNo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                myFlag = 0;
+
             }
         });
+
+        introduction();
 
         //displayText(0,"https://naviblind.000webhostapp.com/welcomemale.mp3");
 
@@ -270,6 +386,7 @@ public class MainActivity extends AppCompatActivity {
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) { // permission was granted
 
                     Toast.makeText(MainActivity.this, "Permission granted for coarse location and Wi-Fi status", Toast.LENGTH_SHORT).show();
+                    permissionOK = true;
                 } else {// permission denied
 
                     Toast.makeText(MainActivity.this, "Permission denied for coarse location and Wi-Fi status", Toast.LENGTH_SHORT).show();
@@ -284,7 +401,7 @@ public class MainActivity extends AppCompatActivity {
       //Implement an IALocationListener interface and override its onLocationChanged() callback method
       @Override
       public void onLocationChanged(IALocation iaLocation) {
-          //Toast.makeText(MainActivity.this, "Location Changing...", Toast.LENGTH_SHORT).show();
+          Toast.makeText(MainActivity.this, "Location Changing...", Toast.LENGTH_SHORT).show();
           mTextView.setText(String.format(Locale.UK, "Latitude: %.8f,\nLongitude: %.8f,\nAccuracy: %.8f,\nCertainty: %.8f,\nLevel: %d",
                   iaLocation.getLatitude(), iaLocation.getLongitude(),iaLocation.getAccuracy(),iaLocation.getFloorCertainty(),
                   iaLocation.getFloorLevel()));
@@ -305,34 +422,88 @@ public class MainActivity extends AppCompatActivity {
           mLogging.setTextColor(0xFFFF4046);
           mScrollView.smoothScrollBy(0, mLogging.getBottom());
 
-          if (currentDistance_SP <= 4) {
-             // displayText(0,"https://naviblind.000webhostapp.com/welcomemale.mp3");
-              //mIALocationManager.removeLocationUpdates(mIALocationListener);
-              displayTextTwo(0,11);
-              new CountDownTimer(10000, 1000){//10 second count down timer
-                  @Override
-                  public void onTick(long millisUntilFinished) {
-                      Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
-                  }
+          if (calibrationOK && statusOK && permissionOK && iaLocation.getAccuracy()<=5) {
 
-                  @Override
-                  public void onFinish() {
-                      //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                  }
-              }.start();
+            if (currentDistance_SP <= 4) {
+                // displayText(0,"https://naviblind.000webhostapp.com/welcomemale.mp3");
+                //mIALocationManager.removeLocationUpdates(mIALocationListener);
+                displayTextTwo(0,11);
+                new CountDownTimer(10000, 1000){//10 second count down timer
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+                    }
 
-          } else if (currentDistance_MD <=4){
-              //displayText(2,"https://naviblind.000webhostapp.com/after_main_door.mp3");
-              displayTextTwo(2,0);
-          } else if (currentDistance_4S <=4){
-              //displayText(4,"https://naviblind.000webhostapp.com/narrow_corridor.mp3");
-              displayTextTwo(4,5);
-          } else if (currentDistance_2S <=4) {
-              //displayText(6,"https://naviblind.000webhostapp.com/at_two_steps.mp3");
-              displayTextTwo(6,1);
-          } else if (currentDistance_GR <=4) {
-              //displayText(7,"https://naviblind.000webhostapp.com/end_point.mp3");
-              displayTextTwo(7,2);
+                    @Override
+                    public void onFinish() {
+                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                    }
+                }.start();
+
+            } else if (currentDistance_MD <=4){
+                //displayText(2,"https://naviblind.000webhostapp.com/after_main_door.mp3");
+                displayTextTwo(2,0);
+                new CountDownTimer(10000, 1000){//10 second count down timer
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                    }
+                }.start();
+
+            } else if (currentDistance_4S <=4){
+                //displayText(4,"https://naviblind.000webhostapp.com/narrow_corridor.mp3");
+                displayTextTwo(4,5);
+                new CountDownTimer(10000, 1000){//10 second count down timer
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                    }
+                }.start();
+
+            } else if (currentDistance_2S <=4) {
+                //displayText(6,"https://naviblind.000webhostapp.com/at_two_steps.mp3");
+                displayTextTwo(6,1);
+                new CountDownTimer(10000, 1000){//10 second count down timer
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                    }
+                }.start();
+
+            } else if (currentDistance_GR <=4) {
+                //displayText(7,"https://naviblind.000webhostapp.com/end_point.mp3");
+                displayTextTwo(7,2);
+                new CountDownTimer(10000, 1000){//10 second count down timer
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                    }
+                }.start();
+
+            }
+
+          } else {
+              displayTextTwo(15,15);
           }
       }
 
@@ -347,24 +518,29 @@ public class MainActivity extends AppCompatActivity {
                           break;
                       case IALocationManager.CALIBRATION_GOOD:
                           quality = "Good";
+                          calibrationOK = true;
                           break;
                       case IALocationManager.CALIBRATION_EXCELLENT:
                           quality = "Excellent";
+                          calibrationOK = true;
                           break;
                   }
-                  logText("Calibration Quality: " + quality + " Status Code: " + status);
+                  //logText("Calibration Quality: " + quality + " Status Code: " + status);
+                  logText("Calibration: " + quality);
                   break;
               case IALocationManager.STATUS_AVAILABLE:
-                  logText("onStatusChanged: Available" + " Status Code: " + status);
+                  //logText("onStatusChanged: Available" + " Status Code: " + status);
+                  logText("Status: Available");
+                  statusOK = true;
                   break;
               case IALocationManager.STATUS_LIMITED:
-                  logText("onStatusChanged: Limited");
+                  logText("Status: Limited");
                   break;
               case IALocationManager.STATUS_OUT_OF_SERVICE:
-                  logText("onStatusChanged: Out of service");
+                  logText("Status: Out of service");
                   break;
               case IALocationManager.STATUS_TEMPORARILY_UNAVAILABLE:
-                  logText("onStatusChanged: Temporarily unavailable");
+                  logText("Status: Temporarily unavailable");
           }
 
       }
@@ -372,17 +548,28 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        if(mPlayer != null)
+        {
+            mPlayer.start();
+        }
         super.onResume();
         Toast.makeText(MainActivity.this, "DEBUG::onResume() callback...", Toast.LENGTH_LONG).show();
         mRequestStartTime = SystemClock.elapsedRealtime();
-        mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
     }
 
     @Override
     protected void onPause() {
+        if(mPlayer != null && mPlayer.isPlaying())
+        {
+            mPlayer.pause();
+        }
         super.onPause();
         Toast.makeText(MainActivity.this, "DEBUG::onPause() callback...", Toast.LENGTH_LONG).show();
         mIALocationManager.removeLocationUpdates(mIALocationListener);
+        //mPlayer.pause();
+        //mPlayer.release();//releasing and nullifying MediaPLayer
+        //mPlayer = null;
     }
 
     @Override
@@ -390,6 +577,8 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(MainActivity.this, "DEBUG::onDestroy() callback...", Toast.LENGTH_LONG).show();
         mIALocationManager.destroy();
         super.onDestroy();
+        mPlayer.release();//releasing and nullifying MediaPLayer
+        mPlayer = null;
     }
 
     @Override
@@ -433,11 +622,21 @@ public class MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(savedInstanceState);
     }*/
 
-    class speechListener implements RecognitionListener {
+    private class speechListener implements RecognitionListener {
 
         @Override
         public void onReadyForSpeech(Bundle params) {
             Log.d(TAG, "onReadyForSpeech");
+            /*new CountDownTimer(12000, 1000){//10 second count down timer
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFinish() {
+                }
+            }.start();*/
         }
 
         @Override
@@ -461,6 +660,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onEndOfSpeech() {
             Log.d(TAG, "onEndofSpeech");
+            /*new CountDownTimer(8000, 1000){//10 second count down timer
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFinish() {
+                }
+            }.start();*/
 
         }
 
@@ -473,7 +682,7 @@ public class MainActivity extends AppCompatActivity {
             mLogging.setTextSize(30);
             mLogging.setTextColor(0xFFFF4046);
             mScrollView.smoothScrollBy(0, mLogging.getBottom());
-
+            tryAgain();
         }
 
         @Override
@@ -484,11 +693,23 @@ public class MainActivity extends AppCompatActivity {
             //String mystr = new String();
 
             ArrayList data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+            String input = data.get(0).toString();
+            String myInput = input.trim();
             mLogging.setText("");
-            mLogging.setText("You said : " + data.get(0));
+            mLogging.setText(String.format(Locale.UK, "\n %s", "You said : " + myInput));
+            //mLogging.setText("You said : " + input);
             mLogging.setTextSize(30);
             mLogging.setTextColor(0xFFFF4046);
             mScrollView.smoothScrollBy(0, mLogging.getBottom());
+
+            if (myInput.equals("I am ready to start")){
+                Toast.makeText(MainActivity.this, "DEBUG::Request Location Updates", Toast.LENGTH_LONG).show();
+                mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+            }
+
+            else{
+                tryAgain();
+            }
             //for (int i = 0; i < data.size(); i++)
             //{
             //   Log.d(TAG, "result " + data.get(i));
@@ -512,13 +733,13 @@ public class MainActivity extends AppCompatActivity {
             mLogging.setTextSize(30);
             mLogging.setTextColor(0xFFFF4046);
             mScrollView.smoothScrollBy(0, mLogging.getBottom());
+            //introduction();
             //for (int i = 0; i < data.size(); i++)
             //{
              //   Log.d(TAG, "result " + data.get(i));
              //   mystr += data.get(i);
             //}
             //mTextView.setText("results: " + String.valueOf(data.size()));
-
         }
 
         @Override
@@ -531,13 +752,15 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Fire an intent to start the voice recognition activity.
      */
-    private void startVoiceRecognitionActivity()
+    private void    startVoiceRecognitionActivity()
     {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Please speak now...");
         //intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,"com.example.salfino.voice_test");
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,1000);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,5000);
         Toast.makeText(MainActivity.this, "DEBUG::Launch startListening()", Toast.LENGTH_LONG).show();
         mSR.startListening(intent);
 

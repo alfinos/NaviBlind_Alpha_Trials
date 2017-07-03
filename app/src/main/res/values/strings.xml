@@ -4,10 +4,22 @@
     <string name="debug">Launch Debug</string>
     <string name="test_speech">Test Speech</string>
 
+
+    <string name="empty"></string>
+
+    <string name="no_service">Please wait...service not ready.</string>
+
+    <string name="try_again">Please try again...</string>
+
     <string name="welcome">Welcome to the Department of Computer Science. You are now
                 on the second floor of the extension building.For room number two six
                 seven, walk to your right towards the main door, this is normally open
                 but please exercise caution.</string>
+
+    <string name="welcome_two">Welcome to the Department of Computer Science.
+                You are now on the second floor of the extension building.
+                This application will guide you to room number two six seven.
+                When ready to start, wait for the notification alert and say "I am ready to start".</string>
 
     <string name="main_door">Have you gone through the main fire exit door in front of you?
                 Please say Yes when ready.</string>
