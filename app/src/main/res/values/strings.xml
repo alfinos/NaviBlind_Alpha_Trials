@@ -48,6 +48,10 @@
     <string name="end_point">You have arrived to room two six seven (267) which has its door to your
                 left.</string>
 
+    <string name="start_point">Please start walking forward for about twenty five (25) steps. Then turn
+                cautiously to the left and take the sub-level stairways containing four steps
+                down towards the main corridor.</string>
+
     <string name="response_yes">Your response was yes.</string>
 
     <string name="response_no">Your response was no.</string>

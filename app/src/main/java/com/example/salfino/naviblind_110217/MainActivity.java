@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.SystemClock;
@@ -31,7 +30,9 @@ import com.indooratlas.android.sdk.IALocationManager;
 import com.indooratlas.android.sdk.IALocationRequest;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -52,7 +53,8 @@ public class MainActivity extends AppCompatActivity {
             R.string.welcome_two,
             R.string.empty,
             R.string.no_service,
-            R.string.try_again
+            R.string.try_again,
+            R.string.start_point
     };
 
     private int[] audioCommands = {
@@ -72,13 +74,14 @@ public class MainActivity extends AppCompatActivity {
             R.raw.welcomemaletwo,
             R.raw.alert,
             R.raw.service_not_ready,
-            R.raw.try_again
+            R.raw.try_again,
+            R.raw.start_position
     };
     //Waypoint geo-coordinates in decimal degrees (DD)
     private static final double GR_OFFICE_LAT = 51.52222145;
     private static final double GR_OFFICE_LON = -0.13049584;
-    private static final double START_POSITION_LAT = 51.52209086;
-    private static final double START_POSITION_LON = -0.13077546;
+    private static final double START_POSITION_LAT = 51.52231720;
+    private static final double START_POSITION_LON = -0.13089649;
     private static final double FOUR_STEPS_LAT = 51.52221143;
     private static final double FOUR_STEPS_LON = -0.13077848;
     private static final double TWO_STEPS_LAT = 51.52228758;
@@ -89,11 +92,12 @@ public class MainActivity extends AppCompatActivity {
     private final int MY_CODE_PERMISSIONS = 1;
     //static final String FASTEST_INTERVAL = "fastestInterval";
     //static final String SHORTEST_DISPLACEMENT = "shortestDisplacement";
-    private long DEFAULT_INTERVAL = 100L;//milliseconds
-    private float DEFAULT_DISPLACEMENT = 1f;//meters
+    private long DEFAULT_INTERVAL = 200L;//milliseconds
+    private float DEFAULT_DISPLACEMENT = 0.5f;//meters
     public IALocationManager mIALocationManager;
     public MediaPlayer mPlayer;
     public SpeechRecognizer mSR;
+    public static Set<MediaPlayer> activePlayers = new HashSet<MediaPlayer>();
     //private Button mLocationButton;
     //private Button mStopButton;
     private Button mYes;
@@ -121,6 +125,20 @@ public class MainActivity extends AppCompatActivity {
         mScrollView.smoothScrollBy(0, mLogging.getBottom());
     }
 
+    private void timer(int seconds){
+
+        new CountDownTimer(seconds, 1000){// x seconds count down timer
+            @Override
+            public void onTick(long millisUntilFinished) {
+                Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFinish() {
+                Toast.makeText(MainActivity.this, "Timer Stopped.", Toast.LENGTH_SHORT).show();
+            }
+        }.start();
+    }
     private void introduction(){
         //displayTextTwo(14,14);//Pre-audio alert
         new CountDownTimer(6000, 1000){//10 second count down timer
@@ -219,36 +237,95 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void displayTextTwo (int textCommandIndex, int audioCommandIndex) {
+    private void displayTextTwo (final int textCommandIndex, final int audioCommandIndex) {
 
         mLogging.setText("");
         mLogging.setText(textCommands[textCommandIndex]);
         mLogging.setTextSize(30);
         mLogging.setTextColor(0xFFFF4046);
         mScrollView.smoothScrollBy(0, mLogging.getBottom());
-        //MediaPlayer mPlayer = MediaPlayer.create(this,R.raw.welcome);
+
         try {
-            //mPlayer = MediaPlayer.create(this,audioCommands[audioCommandIndex]);
-            mPlayer = new MediaPlayer();
-            Uri mediaPath = Uri.parse("android.resource://" + getPackageName() + "/" + audioCommands[audioCommandIndex]);
-            mPlayer.setDataSource(getApplicationContext(),mediaPath);
+            mPlayer = MediaPlayer.create(this,audioCommands[audioCommandIndex]);
+            /*mPlayer = new MediaPlayer();
+            AssetFileDescriptor afd = getApplicationContext().getResources().openRawResourceFd(audioCommands[audioCommandIndex]);
+            //Uri mediaPath = Uri.parse("android.resource://" + getPackageName() + "/" + audioCommands[audioCommandIndex]);
+            mPlayer.setDataSource(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());
+            afd.close();*/
+            activePlayers.add(mPlayer);//Garbage collector issue ....keeping at least one pointer to the instance somewhere
             AudioAttributes myAttributes = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build();
             mPlayer.setAudioAttributes(myAttributes);
-            mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {//Running media player on a separate UI thread
+            mPlayer.setLooping(false);
+            /*mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {//Running media player on a separate UI thread
                 @Override
                 public void onPrepared(MediaPlayer mp) {//called when media is done preparing
+                    Toast.makeText(MainActivity.this, "PLAYBACK START!!!!!!", Toast.LENGTH_SHORT).show();
                     mp.start();
                 }
-            });
-            mPlayer.prepareAsync();//Prepares media in the background
-            //mPlayer.start();
+            });*/
+            //mPlayer.prepareAsync();//Prepares media in the background
+            mPlayer.start();
             mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
-                    
+                    mp.stop();
+                    activePlayers.remove(mp);
+                    mp.release();
+                    mPlayer = null;
+                    if (textCommandIndex == 13){
+                        startVoiceRecognitionActivity();//Launch speech recogniser
+                    }else if (textCommandIndex == 17){
+                        mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                    }else if (textCommandIndex == 4){
+                        mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                    }else if (textCommandIndex == 6){
+                        mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                    }else if (textCommandIndex == 7){
+                        mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                    }
+                    else {
+
+                        Toast.makeText(MainActivity.this, "PLAYBACK COMPLETE!!!!!!", Toast.LENGTH_SHORT).show();
+                    }
+
+                }
+            });
+            mPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    Toast.makeText(MainActivity.this, "ERROR!!!!!!", Toast.LENGTH_SHORT).show();
+                    switch (what) {
+                        case MediaPlayer.MEDIA_ERROR_UNKNOWN:
+                            switch (extra) {
+                                case MediaPlayer.MEDIA_ERROR_IO:
+                                    break;
+                                case MediaPlayer.MEDIA_ERROR_MALFORMED:
+                                    break;
+                                case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+                                    break;
+                                case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+                                    break;
+                            }
+                            logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra);
+                            break;
+                        case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
+                            switch (extra) {
+                                case MediaPlayer.MEDIA_ERROR_IO:
+                                    break;
+                                case MediaPlayer.MEDIA_ERROR_MALFORMED:
+                                    break;
+                                case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+                                    break;
+                                case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+                                    break;
+                            }
+                            logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra);
+                            break;
+                    }
+                    return false;
                 }
             });
         } catch (Exception e) {
@@ -293,13 +370,13 @@ public class MainActivity extends AppCompatActivity {
                                                       .withAccuracy(75f)
                                                       .withFloorLevel(2).build();
         mIALocationManager.setLocation(location);//Explicitly set the the initial fix as specified above
-        Toast.makeText(MainActivity.this, "DEBUG::First fix location set...", Toast.LENGTH_LONG).show();
+        //Toast.makeText(MainActivity.this, "DEBUG::First fix location set...", Toast.LENGTH_LONG).show();
 
         IALocationRequest request = IALocationRequest.create();
         request.setPriority(IALocationRequest.PRIORITY_HIGH_ACCURACY);
         request.setFastestInterval(DEFAULT_INTERVAL);//Explicitly set the fastest interval for location updates in milliseconds
         request.setSmallestDisplacement(DEFAULT_DISPLACEMENT);//Set the minimum displacement between location updates in meters
-        Toast.makeText(MainActivity.this, "DEBUG::Interval & Displacement set...", Toast.LENGTH_LONG).show();
+        //Toast.makeText(MainActivity.this, "DEBUG::Interval & Displacement set...", Toast.LENGTH_LONG).show();
 
         //Create a new instance of SpeechRecognizer using its createSpeechRecognizer() method
         mSR = SpeechRecognizer.createSpeechRecognizer(this);
@@ -320,7 +397,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        introduction();
+        //introduction();
+
+        displayTextTwo(14,14);
+        displayTextTwo(13,13);
 
         //displayText(0,"https://naviblind.000webhostapp.com/welcomemale.mp3");
 
@@ -401,6 +481,9 @@ public class MainActivity extends AppCompatActivity {
       //Implement an IALocationListener interface and override its onLocationChanged() callback method
       @Override
       public void onLocationChanged(IALocation iaLocation) {
+          IALocation location = new IALocation.Builder()
+                  .withFloorLevel(2).build();
+          mIALocationManager.setLocation(location);//Explicitly set floor level to 2
           Toast.makeText(MainActivity.this, "Location Changing...", Toast.LENGTH_SHORT).show();
           mTextView.setText(String.format(Locale.UK, "Latitude: %.8f,\nLongitude: %.8f,\nAccuracy: %.8f,\nCertainty: %.8f,\nLevel: %d",
                   iaLocation.getLatitude(), iaLocation.getLongitude(),iaLocation.getAccuracy(),iaLocation.getFloorCertainty(),
@@ -422,88 +505,45 @@ public class MainActivity extends AppCompatActivity {
           mLogging.setTextColor(0xFFFF4046);
           mScrollView.smoothScrollBy(0, mLogging.getBottom());
 
-          if (calibrationOK && statusOK && permissionOK && iaLocation.getAccuracy()<=5) {
+          //if (calibrationOK && statusOK && permissionOK && iaLocation.getFloorLevel() == 2 && iaLocation.getAccuracy()<=10) {
+          if (iaLocation.getFloorLevel() == 2 && iaLocation.getAccuracy()<=15) {
+              Toast.makeText(MainActivity.this, "SERVICE RUNNING OKKKK", Toast.LENGTH_LONG).show();
 
-            if (currentDistance_SP <= 4) {
+            if (currentDistance_SP <= 6) {
                 // displayText(0,"https://naviblind.000webhostapp.com/welcomemale.mp3");
                 //mIALocationManager.removeLocationUpdates(mIALocationListener);
-                displayTextTwo(0,11);
-                new CountDownTimer(10000, 1000){//10 second count down timer
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
-                    }
+                Toast.makeText(MainActivity.this, "START POSITION", Toast.LENGTH_LONG).show();
+                mIALocationManager.removeLocationUpdates(mIALocationListener);
+                displayTextTwo(17,17);
 
-                    @Override
-                    public void onFinish() {
-                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                    }
-                }.start();
-
-            } else if (currentDistance_MD <=4){
+            } else if (currentDistance_MD <=6){
                 //displayText(2,"https://naviblind.000webhostapp.com/after_main_door.mp3");
-                displayTextTwo(2,0);
-                new CountDownTimer(10000, 1000){//10 second count down timer
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
-                    }
+                //displayTextTwo(2,0);
+                Toast.makeText(MainActivity.this, "MAIN DOOR", Toast.LENGTH_LONG).show();
 
-                    @Override
-                    public void onFinish() {
-                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                    }
-                }.start();
-
-            } else if (currentDistance_4S <=4){
+            } else if (currentDistance_4S <=6){
                 //displayText(4,"https://naviblind.000webhostapp.com/narrow_corridor.mp3");
+                Toast.makeText(MainActivity.this, "FOUR STEPS", Toast.LENGTH_LONG).show();
+                mIALocationManager.removeLocationUpdates(mIALocationListener);
                 displayTextTwo(4,5);
-                new CountDownTimer(10000, 1000){//10 second count down timer
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
-                    }
 
-                    @Override
-                    public void onFinish() {
-                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                    }
-                }.start();
-
-            } else if (currentDistance_2S <=4) {
+            } else if (currentDistance_2S <=6) {
                 //displayText(6,"https://naviblind.000webhostapp.com/at_two_steps.mp3");
+                Toast.makeText(MainActivity.this, "TWO STEPS", Toast.LENGTH_LONG).show();
+                mIALocationManager.removeLocationUpdates(mIALocationListener);
                 displayTextTwo(6,1);
-                new CountDownTimer(10000, 1000){//10 second count down timer
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
-                    }
 
-                    @Override
-                    public void onFinish() {
-                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                    }
-                }.start();
-
-            } else if (currentDistance_GR <=4) {
+            } else if (currentDistance_GR <=6) {
                 //displayText(7,"https://naviblind.000webhostapp.com/end_point.mp3");
+                Toast.makeText(MainActivity.this, "FINAL DESTINATION", Toast.LENGTH_LONG).show();
+                mIALocationManager.removeLocationUpdates(mIALocationListener);
                 displayTextTwo(7,2);
-                new CountDownTimer(10000, 1000){//10 second count down timer
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                        Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onFinish() {
-                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                    }
-                }.start();
 
             }
 
           } else {
-              displayTextTwo(15,15);
+              //displayTextTwo(15,15);
+              Toast.makeText(MainActivity.this, "WAIT FOR SERVICE!!!!!", Toast.LENGTH_LONG).show();
           }
       }
 
