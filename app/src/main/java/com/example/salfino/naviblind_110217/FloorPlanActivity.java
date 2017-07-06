@@ -51,7 +51,7 @@ public class FloorPlanActivity extends AppCompatActivity {
     private static final double MAIN_DOOR_LAT = 51.52213759;
     private static final double MAIN_DOOR_LON = -0.13069935;
     private long DEFAULT_INTERVAL = 100L;//milliseconds
-    private float DEFAULT_DISPLACEMENT = 1f;//meters
+    private float DEFAULT_DISPLACEMENT = 0.2f;//meters
 
     private static final int REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 1;
     private static final float dotRadius = 1.0f; // blue dot radius in meters
