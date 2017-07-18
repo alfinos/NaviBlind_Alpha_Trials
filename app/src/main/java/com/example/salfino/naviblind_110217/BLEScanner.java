@@ -1,7 +1,11 @@
 package com.example.salfino.naviblind_110217;
 
+import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
@@ -9,21 +13,14 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
-import android.widget.TextView;
+import android.os.IBinder;
 import android.widget.Toast;
 
 import java.util.List;
-import java.util.Locale;
 
-public class TestActivity extends AppCompatActivity {
-
-    public TextView mTest;
-    public TextView mTest2;
-    public TextView mTest3;
-    public final static int REQUEST_ENABLE_BT = 1;
+public class BLEScanner extends Service {
+    int mStartMode;
     public BluetoothAdapter mBTAdapter;
     BluetoothGatt mBluetoothGatt;
     BluetoothLeScanner scanner;
@@ -36,32 +33,40 @@ public class TestActivity extends AppCompatActivity {
     Integer rssi = 0;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_test);
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return mStartMode;
+    }
 
-        mTest = (TextView) findViewById(R.id.textView);
-        mTest.setTextSize(20);
-        mTest.setTextColor(0xFFFF4046);
+    @Override
+    public IBinder onBind(Intent intent) {
+        // TODO: Return the communication channel to the service.
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
 
-        mTest2 = (TextView) findViewById(R.id.textViewtwo);
-        mTest2.setTextSize(20);
-        mTest2.setTextColor(0xFFFF4044);
-
-        mTest3 = (TextView) findViewById(R.id.textViewthree);
-        mTest3.setTextSize(20);
-        mTest3.setTextColor(0xFFFF4044);
-
+    @Override
+    public void onCreate() {
+        super.onCreate();
         initialiseBLE();
         startLeScan(true);
-        Toast.makeText(TestActivity.this, "SCAN STARTED...", Toast.LENGTH_LONG).show();
-        /*if (mScanning) {
-            mTest.setText("Scanning for BLE Devices");
-        }
-        else{
-            mTest.setText("Stopped Scanning...");
-        }*/
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        startLeScan(false);
+        Toast.makeText(BLEScanner.this, "SCAN STOPPED...", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public void onRebind(Intent intent) {
+        super.onRebind(intent);
+    }
+
     //Method to convert a byte array to a HEX. string.
     private String byteArrayToHex(byte[] a) {
         StringBuilder sb = new StringBuilder(a.length * 2);
@@ -74,11 +79,6 @@ public class TestActivity extends AppCompatActivity {
 
         final BluetoothManager bluetoothManager =  (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBTAdapter = bluetoothManager.getAdapter();//Get the Bluetooth Adapter first
-
-        if (mBTAdapter == null || !mBTAdapter.isEnabled()) {//Enable Bluetooth
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);//Locally defined integer greater than zero
-        }
         //Create the scan settings
         ScanSettings.Builder scanSettingsBuilder = new ScanSettings.Builder();
         //Set scan latency mode. Lower latency, faster device detection/more battery and resources consumption
@@ -105,30 +105,14 @@ public class TestActivity extends AppCompatActivity {
             //Scanning parameters FILTER / SETTINGS / RESULT CALLBACK. Filter are used to define a particular
             //device to scan for. The Callback is defined above as a method.
             mScanning = true;
-            scanner.startScan(null, scanSettings,mScanCallback);
-            mTest.setText("Scanning for BLE Devices");
-            mTest2.setText("Scanning for BLE Devices");
-            mTest3.setText("Scanning for BLE Devices");
+            scanner.startScan(null, scanSettings, mScanCallback);
+            Toast.makeText(BLEScanner.this, "SCANNING FOR BLE DEVICES...", Toast.LENGTH_SHORT).show();
         }else{
             //Stop scan
             mScanning = false;
             scanner.stopScan(mScanCallback);
-            mTest.setText("Stopped Scanning...");
-            mTest2.setText("Stopped Scanning...");
-            mTest3.setText("Stopped Scanning...");
+            Toast.makeText(BLEScanner.this, "SCANNING STOPPED...", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private double getDistance(double rssi, String location) {//RSSI (dBm) = -10n log10(d) + A and n = 2 for free space and A is average RSSI at 1m
-        double A = -60.0;
-        if (location.equals("GC")){
-            A = -60.0;// average RSSI for beacon installed in George Roussos office
-        } else if (location.equals("SR")) {
-            A =  -50.0; // average RSSI for beacon isntalled in Staff Room, next to lifts
-        } else if (location.equals("SG")) {
-            A = -55.0; // average RSSI for beacon isntalled in Systems Group Area
-        }
-        return Math.pow(10.0,((rssi-(A))/-25.0));//-60dBm is average RSSI at 1m distance i.e. A
     }
 
     //Finding BLE Devices
@@ -139,36 +123,22 @@ public class TestActivity extends AppCompatActivity {
             String advertisingString = byteArrayToHex(result.getScanRecord().getBytes());
             rssi = result.getRssi();
             dName = result.getDevice().getName();
-            if (dName != null) {
+            if (dName != null){
                 dName = (result.getDevice().getName()).trim();
             }
             macAddress = result.getDevice().getAddress();
-            if (macAddress != null) {
+            if (macAddress != null){
                 macAddress = (result.getDevice().getAddress()).trim();
             }
 
             /*mTest.setText(String.format(Locale.UK, "RSSI: %d, \nMAC Address: %s, \nDevice Name: %s",
                     result.getRssi(), result.getDevice().getAddress(), result.getDevice().getName()));*/
 
-            if (macAddress != null && macAddress.equals("F4:46:EA:8F:C2:2D")) {
-                mTest.setText(String.format(Locale.UK, "Position: %s,\nRSSI: %d, \nMeters: %f",
-                        "266 Beacon", result.getRssi(), getDistance(result.getRssi(), "GC")));
-            } else if (macAddress != null && macAddress.equals("C3:4E:E7:D1:2E:3A")) {
-                mTest2.setText(String.format(Locale.UK, "Position: %s,\nRSSI: %d, \nMeters: %f",
-                        "SR Beacon", result.getRssi(), getDistance(result.getRssi(), "SR")));
-            } else if (macAddress != null && macAddress.equals("C7:96:98:06:4C:64")) {
-                mTest3.setText(String.format(Locale.UK, "Position: %s,\nRSSI: %d, \nMeters: %f",
-                        "SG Beacon", result.getRssi(), getDistance(result.getRssi(), "SG")));
-
-            }
-
-            else
-
-            {
-                mTest.setText("Can't find End Point Beacon!!!");
-                mTest2.setText("Can't find Lifts Area Beacon!!!");
-                mTest3.setText("Can't find Systems Group Beacon!!!");
-            }
+            if (macAddress != null && macAddress.equals("F4:46:EA:8F:C2:2D")){
+                Toast.makeText(BLEScanner.this, "RSSI::" + result.getRssi() , Toast.LENGTH_LONG).show();
+                //mTest.setText(String.format(Locale.UK, "RSSI: %d, \nMAC Address: %s, \nDevice Name: %s",
+                //        result.getRssi(), result.getDevice().getAddress(), result.getDevice().getName()));
+            }else{Toast.makeText(BLEScanner.this, "Can't find beacon...", Toast.LENGTH_SHORT).show();;}
 
             /*if (dName != null && macAddress != null) {
                 if (dName.equals("iBKS105") && macAddress.equals("F4:46:EA:8F:C2:2D")) {
@@ -194,30 +164,56 @@ public class TestActivity extends AppCompatActivity {
         }
     };
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
+    //Connecting to a GATT Server on the BLE device
+    private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            super.onConnectionStateChange(gatt, status, newState);
+        }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        startLeScan(false);
-        Toast.makeText(TestActivity.this, "SCAN STOPPED...", Toast.LENGTH_LONG).show();
-    }
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            super.onServicesDiscovered(gatt, status);
+        }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicRead(gatt, characteristic, status);
+        }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicWrite(gatt, characteristic, status);
+        }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super.onCharacteristicChanged(gatt, characteristic);
+        }
+
+        @Override
+        public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            super.onDescriptorRead(gatt, descriptor, status);
+        }
+
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            super.onDescriptorWrite(gatt, descriptor, status);
+        }
+
+        @Override
+        public void onReliableWriteCompleted(BluetoothGatt gatt, int status) {
+            super.onReliableWriteCompleted(gatt, status);
+        }
+
+        @Override
+        public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
+            super.onReadRemoteRssi(gatt, rssi, status);
+        }
+
+        @Override
+        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+            super.onMtuChanged(gatt, mtu, status);
+        }
+    };
 }

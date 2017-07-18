@@ -88,6 +88,9 @@ public class FloorPlanActivity extends AppCompatActivity {
             if (iaRegion.getType() == IARegion.TYPE_FLOOR_PLAN) {
                 String id = iaRegion.getId();
                 Log.d(TAG, "floorPlan changed to " + id);
+                IALocation location = new IALocation.Builder()
+                        .withFloorLevel(2).build();
+                mIALocationManagerSecond.setLocation(location);//Explicitly set floor level to 2
                 Toast.makeText(FloorPlanActivity.this, id, Toast.LENGTH_SHORT).show();
                 fetchFloorPlan(id);
             }
@@ -96,6 +99,16 @@ public class FloorPlanActivity extends AppCompatActivity {
         @Override
         public void onExitRegion(IARegion iaRegion) {
             // leaving a previously entered region
+            if (iaRegion.getType() == IARegion.TYPE_FLOOR_PLAN) {
+                String id = iaRegion.getId();
+                Log.d(TAG, "floorPlan changed to " + id);
+                IALocation location = new IALocation.Builder()
+                        .withFloorLevel(2).build();
+                mIALocationManagerSecond.setLocation(location);//Explicitly set floor level to 2
+                Toast.makeText(FloorPlanActivity.this, id, Toast.LENGTH_SHORT).show();
+                fetchFloorPlan(id);
+            }
+
         }
     };
 

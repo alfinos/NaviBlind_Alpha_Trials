@@ -13,12 +13,31 @@
     tools:context="com.example.salfino.naviblind_110217.TestActivity">
 
     <TextView
-        android:text="This is a test"
+        android:id="@+id/textView"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="100dp"
+        android:text="This is a test"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="196dp"
-        android:id="@+id/textView"/>
+        android:layout_alignStart="@+id/textViewthree"
+        android:layout_alignEnd="@+id/textViewthree"/>
+
+    <TextView
+        android:text="This is a test also"
+        android:layout_width="wrap_content"
+        android:layout_height="120dp"
+        android:id="@+id/textViewtwo"
+        android:layout_marginBottom="180dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignStart="@+id/textView"
+        android:layout_alignEnd="@+id/textView"/>
+
+    <TextView
+        android:text="This is a test also"
+        android:layout_width="wrap_content"
+        android:layout_height="120dp"
+        android:id="@+id/textViewthree"
+        android:layout_marginTop="214dp"
+        android:layout_alignTop="@+id/textViewtwo"
+        android:layout_centerHorizontal="true"/>
 
 </RelativeLayout>
