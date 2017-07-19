@@ -162,6 +162,8 @@ public class MainActivity extends AppCompatActivity {
     public String repatutterance = "";
     public String serviceutterance = "";
     public String routeutterance = "";
+    public String mytempLocation = "";
+    public int chosenRouteIndex = 0;
 
 
     private void logText(String msg) {
@@ -218,14 +220,14 @@ public class MainActivity extends AppCompatActivity {
             String currentplanid = myObject.getFloorplanid();
             if (currentplanid.equals(id)){
                 String floorutterance = myObject.getFloordescription();
-                initString = introutterance + floorutterance + " " + confirmationutterance;
+                initString = introutterance + floorutterance + "... " + repatutterance;
                 break;
             }
         }
         return initString;
     }
 
-    public void menu(){
+    public void menu(String currentLocation){
         String currentName = "";
         String allLocations = "";
 
@@ -234,7 +236,40 @@ public class MainActivity extends AppCompatActivity {
             currentName = myObject.getName();
             allLocations = currentName + "... " + allLocations;
         }
-        texttospeech(menuutterance + "... " + allLocations,"Menu");
+        texttospeech(menuutterance + "... " +roomutterance +"... " + allLocations,"Menu",currentLocation);
+
+    }
+
+    public void chooseRoute (String startname,String endname ){
+        Toast.makeText(MainActivity.this, "!START NAME::"+startname, Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, "!END NAME::"+endname, Toast.LENGTH_SHORT).show();
+        String currentStartName = "";
+        String currentEndName = "";
+        String currentDescription = "";
+        String inputString = "";
+        Toast.makeText(MainActivity.this, "INDEX AT START OF LOOP::"+chosenRouteIndex, Toast.LENGTH_SHORT).show();
+        for (int i = 0; i < routeData.size();i++){
+            RouteEntry myObject = routeData.get(i);
+            currentStartName = myObject.getStartpointname().trim();
+            currentEndName = myObject.getEndpointname().trim();
+            if (currentStartName.equalsIgnoreCase(startname.trim())&currentEndName.equalsIgnoreCase(endname.trim())){
+                chosenRouteIndex = i;
+            }else{
+                Toast.makeText(MainActivity.this, "Route not found!!!!!!!!!", Toast.LENGTH_SHORT).show();
+            }
+            break;
+        }
+        Toast.makeText(MainActivity.this, "INDEX OUTSIDE LOOP::"+chosenRouteIndex, Toast.LENGTH_SHORT).show();
+        RouteEntry myObject = routeData.get(chosenRouteIndex);
+        currentDescription = myObject.getRoutedescription();
+
+        inputString = routeutterance + currentDescription;
+        texttospeech(inputString,"OnChoosingRoute",startname);
+
+    }
+
+    public void launchRoute(){
+
 
     }
     private void startLeScan(boolean enable) {
@@ -361,7 +396,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onFinish() {
                         //displayTextTwo(16,16);//Try again audio
-                        texttospeech(repatutterance,"Repeat");
+                        texttospeech(repatutterance,"Repeat","");
                         new CountDownTimer(6000, 1000){//10 second count down timer
                             @Override
                             public void onTick(long millisUntilFinished) {
@@ -603,7 +638,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void texttospeech(final String text, final String utteranceId){
+    private void texttospeech(final String text, final String utteranceId,final String currentLocationName){
 
         mLogging.setText("");
         mLogging.setText(text);
@@ -635,7 +670,8 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            startVoiceRecognitionActivity();
+                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                            //startVoiceRecognitionActivity();
                         }
                     });
 
@@ -654,7 +690,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             startOfRoute = false;
-                            menu();
+                            menu(currentLocationName);
                             //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
@@ -664,18 +700,25 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                            mytempLocation = currentLocationName;
                             startVoiceRecognitionActivity();
                         }
                     });
-                }
-
-                else if (utteranceId.equals("Repeat")){
+                } else if (utteranceId.equals("Repeat")){
 
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             startOfRoute = true;
                             mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                        }
+                    });
+                }else if (utteranceId.equals("OnChoosingRoute")){
+
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            //launchRoute();
                         }
                     });
                 }
@@ -860,7 +903,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFinish() {
                 String initString = initializeTTS();
-                texttospeech(initString,"OnInitialization");
+                texttospeech(initString,"OnInitialization","");
 
             }
         }.start();
@@ -906,7 +949,7 @@ public class MainActivity extends AppCompatActivity {
           //mPlayer = null;
 
           //Toast.makeText(MainActivity.this, "Location Changing...", Toast.LENGTH_SHORT).show();
-
+          String currentLocationName = "";
           mTextView.setText(String.format(Locale.UK, "Latitude: %.8f,\nLongitude: %.8f,\nAccuracy: %.8f,\nCertainty: %.8f,\nLevel: %d",
                   iaLocation.getLatitude(), iaLocation.getLongitude(),iaLocation.getAccuracy(),iaLocation.getFloorCertainty(),
                   iaLocation.getFloorLevel()));
@@ -926,7 +969,7 @@ public class MainActivity extends AppCompatActivity {
           mScrollView.smoothScrollBy(0, mLogging.getBottom());*/
 
           if (iaLocation.getFloorLevel() == 2 && iaLocation.getAccuracy()<=5) {
-              String locationString = "";
+              String locationString = "No Location";
               for (int i = 0; i < roomwaypointData.size();i++){
                   RoomWayPointEntry myObject = roomwaypointData.get(i);
                   double comparelatitude = Double.parseDouble(myObject.getLatitude());
@@ -937,16 +980,21 @@ public class MainActivity extends AppCompatActivity {
                   if (currentDistance <=2.5){
                       String textutternace = myObject.getText();
                       String descriptionutternace = myObject.getDescription();
+                      currentLocationName = myObject.getName();
                       locationString = textutternace + "... " + descriptionutternace;
                       break;
                   }
               }
+              if (!locationString.equals("No Location")){
               mIALocationManager.removeLocationUpdates(mIALocationListener);
+              }
 
-              if (startOfRoute){
-                  texttospeech(locationString,"OnLocationChangedStart");
-              }else{
-                  texttospeech(locationString,"OnLocationChanged");
+              if ((startOfRoute)&(!locationString.equals("No Location"))){
+                  texttospeech(locationString,"OnLocationChangedStart",currentLocationName);
+              }else if ((!startOfRoute)&(!locationString.equals("No Location"))){
+                  texttospeech(locationString,"OnLocationChanged",currentLocationName);
+              }else {
+                  displayTextTwo(15, 18);
               }
           } else {
               displayTextTwo(15, 18);
@@ -1256,7 +1304,7 @@ public class MainActivity extends AppCompatActivity {
             mLogging.setTextSize(20);
             mLogging.setTextColor(0xFFFF4046);
             mScrollView.smoothScrollBy(0, mLogging.getBottom());
-            texttospeech(repatutterance,"Repeat");
+            texttospeech(repatutterance,"Repeat","");
             //long startTime = System.currentTimeMillis();
             //tryAgain();
             //long estimatedTime = System.currentTimeMillis() - startTime;
@@ -1287,7 +1335,7 @@ public class MainActivity extends AppCompatActivity {
 
             String currentName = "";
             boolean match = false;
-            Toast.makeText(MainActivity.this, "DEBIG::" + myInput, Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "DEBUG::" + myInput, Toast.LENGTH_SHORT).show();
 
             for (int i = 0; i < roomData.size();i++){
                 RoomEntry myObject = roomData.get(i);
@@ -1302,12 +1350,13 @@ public class MainActivity extends AppCompatActivity {
                 //Need to request Geofence updates but requestGeofenceUpdates not available!!!!
                 //startLeScan(true);
             }else if (match){
-                //launchRoute(myInput);//Pass myInput as parameter
-                Toast.makeText(MainActivity.this, "ROUTE SELECTED", Toast.LENGTH_SHORT).show();
+                chooseRoute(mytempLocation,myInput);//Pass myInput which is end location and mytempLocation which is current location and hence start as parameters
+                Toast.makeText(MainActivity.this, "START::"+mytempLocation, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "END::"+myInput, Toast.LENGTH_SHORT).show();
             }
 
             else{
-                texttospeech(repatutterance,"Repeat");
+                texttospeech(repatutterance,"Repeat","");
                 Toast.makeText(MainActivity.this, "REPEAT!!!", Toast.LENGTH_SHORT).show();
             }
 
@@ -1318,7 +1367,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "onPartialResults");
 
             //tryAgain();
-            texttospeech(repatutterance,"Repeat");
+            texttospeech(repatutterance,"Repeat","");
             //introduction();
             //for (int i = 0; i < data.size(); i++)
             //{
@@ -1332,7 +1381,7 @@ public class MainActivity extends AppCompatActivity {
         public void onEvent(int eventType, Bundle params) {
             Log.d(TAG, "onEvent " + eventType);
             //tryAgain();
-            texttospeech(repatutterance,"Repeat");
+            texttospeech(repatutterance,"Repeat","");
 
         }
     }
