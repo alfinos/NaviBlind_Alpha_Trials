@@ -128,7 +128,13 @@ public class MainActivity extends AppCompatActivity {
     private boolean calibrationOK = false;
     private boolean statusOK = false;
     private boolean permissionOK = false;
+
     private boolean startOfRoute = true;
+    private boolean duringRoute = false;
+    private boolean firstTextFlag = false;
+    private boolean secondTextFlag = false;
+
+
     public boolean endFlag = false;
 
     BluetoothLeScanner scanner;
@@ -241,25 +247,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void chooseRoute (String startname,String endname ){
-        Toast.makeText(MainActivity.this, "!START NAME::"+startname, Toast.LENGTH_SHORT).show();
-        Toast.makeText(MainActivity.this, "!END NAME::"+endname, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(MainActivity.this, "!START NAME::"+startname, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(MainActivity.this, "!END NAME::"+endname, Toast.LENGTH_SHORT).show();
         String currentStartName = "";
         String currentEndName = "";
         String currentDescription = "";
         String inputString = "";
-        Toast.makeText(MainActivity.this, "INDEX AT START OF LOOP::"+chosenRouteIndex, Toast.LENGTH_SHORT).show();
+        //int endnameconvert = Integer.parseInt(endname);
+        //Toast.makeText(MainActivity.this, "INDEX AT START OF LOOP::"+chosenRouteIndex, Toast.LENGTH_SHORT).show();
         for (int i = 0; i < routeData.size();i++){
             RouteEntry myObject = routeData.get(i);
             currentStartName = myObject.getStartpointname().trim();
             currentEndName = myObject.getEndpointname().trim();
-            if (currentStartName.equalsIgnoreCase(startname.trim())&currentEndName.equalsIgnoreCase(endname.trim())){
+            //int currentEndNameConvert = Integer.parseInt(currentEndName);
+            if (currentStartName.equalsIgnoreCase(startname.trim())&& currentEndName.equalsIgnoreCase(endname.trim())){
                 chosenRouteIndex = i;
             }else{
-                Toast.makeText(MainActivity.this, "Route not found!!!!!!!!!", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this, "Route not found!!!!!!!!!", Toast.LENGTH_SHORT).show();
             }
-            break;
         }
-        Toast.makeText(MainActivity.this, "INDEX OUTSIDE LOOP::"+chosenRouteIndex, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(MainActivity.this, "INDEX OUTSIDE LOOP::"+chosenRouteIndex, Toast.LENGTH_SHORT).show();
         RouteEntry myObject = routeData.get(chosenRouteIndex);
         currentDescription = myObject.getRoutedescription();
 
@@ -268,8 +275,35 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void launchRoute(){
+    public void launchRoute(String currentLocation){
+        String startText = "";
+        RouteEntry myObject = routeData.get(chosenRouteIndex);
+        startText = myObject.getStartpointtext();
+        texttospeech(startText,"OnStartText",currentLocation);
 
+    }
+
+    public void launchFirstText(String currentLocation){
+        String firstText = "";
+        RouteEntry myObject = routeData.get(chosenRouteIndex);
+        firstText = myObject.getFirstwaypointtext();
+        texttospeech(firstText,"OnFirstText",currentLocation);
+
+    }
+
+    public void launchSecondText(String currentLocation){
+        String secondText = "";
+        RouteEntry myObject = routeData.get(chosenRouteIndex);
+        secondText = myObject.getSecondwaypointtext();
+        texttospeech(secondText,"OnSecondText",currentLocation);
+
+    }
+
+    public void launchEndText(String currentLocation){
+        String endText = "";
+        RouteEntry myObject = routeData.get(chosenRouteIndex);
+        endText = myObject.getEndpointtext();
+        texttospeech(endText,"OnEndRoute",currentLocation);
 
     }
     private void startLeScan(boolean enable) {
@@ -715,10 +749,56 @@ public class MainActivity extends AppCompatActivity {
                     });
                 }else if (utteranceId.equals("OnChoosingRoute")){
 
+                            MainActivity.this.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                            launchRoute(currentLocationName);
+                        }
+                    });
+                }else if (utteranceId.equals("OnStartText")){
+
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            //launchRoute();
+                            duringRoute = true;
+                            firstTextFlag = false;
+                            secondTextFlag = false;
+                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                        }
+                    });
+                }else if (utteranceId.equals("OnFirstText")){
+
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            duringRoute = true;
+                            firstTextFlag = true;
+                            secondTextFlag = false;
+                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                        }
+                    });
+                }else if (utteranceId.equals("OnSecondText")){
+
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            duringRoute = true;
+                            firstTextFlag = false;
+                            secondTextFlag = true;
+                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                        }
+                    });
+                }else if (utteranceId.equals("OnEndRoute")){
+
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            duringRoute = false;
+                            firstTextFlag = false;
+                            secondTextFlag = false;
+                            mIALocationManager.removeLocationUpdates(mIALocationListener);
+                            endFlag = true;
+                            //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
                 }
@@ -989,10 +1069,19 @@ public class MainActivity extends AppCompatActivity {
               mIALocationManager.removeLocationUpdates(mIALocationListener);
               }
 
-              if ((startOfRoute)&(!locationString.equals("No Location"))){
+              if ((startOfRoute)&(!duringRoute)&(!locationString.equals("No Location"))){
                   texttospeech(locationString,"OnLocationChangedStart",currentLocationName);
-              }else if ((!startOfRoute)&(!locationString.equals("No Location"))){
-                  texttospeech(locationString,"OnLocationChanged",currentLocationName);
+              }else if ((!startOfRoute)&(!duringRoute)&(!locationString.equals("No Location"))) {
+                  texttospeech(locationString, "OnLocationChanged", currentLocationName);
+              }else if ((duringRoute)&(!locationString.equals("No Location"))) {
+                  launchFirstText(currentLocationName);
+                  //Toast.makeText(MainActivity.this, "Location Changing...in route!!", Toast.LENGTH_SHORT).show();
+              }else if ((firstTextFlag)&(!locationString.equals("No Location"))) {
+                  launchSecondText(currentLocationName);
+              }else if ((secondTextFlag)&(!locationString.equals("No Location"))){
+                  launchEndText(currentLocationName);
+
+
               }else {
                   displayTextTwo(15, 18);
               }
@@ -1325,12 +1414,6 @@ public class MainActivity extends AppCompatActivity {
             mLogging.setTextSize(35);
             mLogging.setTextColor(0xFFFFFFFF);
             mScrollView.smoothScrollBy(0, mLogging.getBottom());
-
-            currentDistance_SP = 100d;
-            currentDistance_4S = 100d;
-            currentDistance_2S = 100d;
-            currentDistance_GR = 100d;
-            currentDistance_MD = 100d;
             currentDistance = 100d;
 
             String currentName = "";
