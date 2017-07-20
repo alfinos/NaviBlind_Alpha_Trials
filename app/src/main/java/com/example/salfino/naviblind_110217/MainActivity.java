@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -45,6 +46,7 @@ import com.indooratlas.android.sdk.IALocationRequest;
 import com.indooratlas.android.sdk.IARegion;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -131,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean startOfRoute = true;
     private boolean duringRoute = false;
+    private boolean startTextFlag = false;
     private boolean firstTextFlag = false;
     private boolean secondTextFlag = false;
 
@@ -526,6 +529,129 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+   private void mediaPlayer (final File file, final String utteranceID, final String currentLocationName){
+
+       try {
+
+           Uri myuri = Uri.parse(file.getPath());
+           mPlayer = MediaPlayer.create(this,myuri);
+           AudioAttributes myAttributes = new AudioAttributes.Builder()
+                   .setUsage(AudioAttributes.USAGE_MEDIA)
+                   .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                   .build();
+           mPlayer.setAudioAttributes(myAttributes);
+           mPlayer.setLooping(false);
+           mPlayer.start();
+
+           mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+               @Override
+               public void onCompletion(MediaPlayer mp) {
+                   mp.stop();
+                   mp.release();
+                   mPlayer = null;
+                   file.delete();
+
+
+                   switch (utteranceID) {
+                       case "OnInitialization":
+                           mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                           break;
+                       case "OnLocationChanged":
+                           mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                           break;
+                       case "OnLocationChangedStart":
+                           startOfRoute = false;
+                           menu(currentLocationName);
+                           break;
+                       case "Menu":
+                           mytempLocation = currentLocationName;
+                           startVoiceRecognitionActivity();
+                           break;
+                       case "Repeat":
+                           startOfRoute = true;//?? CHECK!!
+                           mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                           break;
+                       case "OnChoosingRoute":
+                           launchRoute(currentLocationName);
+                           break;
+                       case "OnStartText":
+                           startOfRoute = false;
+                           duringRoute = true;
+                           startTextFlag = true;
+                           firstTextFlag = false;
+                           secondTextFlag = false;
+                           mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                           break;
+                       case "OnFirstText":
+                           startOfRoute = false;
+                           duringRoute = true;
+                           startTextFlag = false;
+                           firstTextFlag = true;
+                           secondTextFlag = false;
+                           mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                           break;
+                       case "OnSecondText":
+                           startOfRoute = false;
+                           duringRoute = true;
+                           startTextFlag = false;
+                           firstTextFlag = false;
+                           secondTextFlag = true;
+                           mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                           break;
+                       case "OnEndRoute":
+                           startOfRoute = false;
+                           duringRoute = false;
+                           firstTextFlag = false;
+                           secondTextFlag = false;
+                           mIALocationManager.removeLocationUpdates(mIALocationListener);
+                           endFlag = true;
+                           break;
+
+                   }
+               }
+           });
+
+           mPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+               @Override
+               public boolean onError(MediaPlayer mp, int what, int extra) {
+                   Toast.makeText(MainActivity.this, "ERROR!!!!!!", Toast.LENGTH_SHORT).show();
+                   switch (what) {
+                       case MediaPlayer.MEDIA_ERROR_UNKNOWN:
+                           switch (extra) {
+                               case MediaPlayer.MEDIA_ERROR_IO:
+                                   break;
+                               case MediaPlayer.MEDIA_ERROR_MALFORMED:
+                                   break;
+                               case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+                                   break;
+                               case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+                                   break;
+                           }
+                           logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra);
+                           break;
+                       case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
+                           switch (extra) {
+                               case MediaPlayer.MEDIA_ERROR_IO:
+                                   break;
+                               case MediaPlayer.MEDIA_ERROR_MALFORMED:
+                                   break;
+                               case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+                                   break;
+                               case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+                                   break;
+                           }
+                           logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra);
+                           break;
+                   }
+                   return false;
+               }
+           });
+       } catch (Exception e) {
+           Toast.makeText(MainActivity.this, "Check Wi-Fi connection or audio file missing!!", Toast.LENGTH_LONG).show();
+       }
+
+
+   }
     private void displayTextTwo (final int textCommandIndex, final int audioCommandIndex) {
 
         mLogging.setText("");
@@ -679,6 +805,7 @@ public class MainActivity extends AppCompatActivity {
         mLogging.setTextSize(35);
         mLogging.setTextColor(0xFFFFFFFF);
         mScrollView.smoothScrollBy(0, mLogging.getBottom());
+        final File file = new File(this.getFilesDir(),"tempfile");
 
         t1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
@@ -687,7 +814,8 @@ public class MainActivity extends AppCompatActivity {
                     t1.setLanguage(Locale.UK);
                     t1.setSpeechRate(0.8f);
                     t1.setPitch(0.8f);
-                    t1.speak(text,TextToSpeech.QUEUE_FLUSH,params,utteranceId);
+                    t1.synthesizeToFile(text,params,file,utteranceId);
+                    //t1.speak(text,TextToSpeech.QUEUE_FLUSH,params,utteranceId);
                 }
             }
         });
@@ -699,13 +827,13 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onDone(String utteranceId) {
+            public void onDone(final String utteranceId) {
                 if (utteranceId.equals("OnInitialization")){
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                            //startVoiceRecognitionActivity();
+                            mediaPlayer(file,utteranceId,currentLocationName);
+                            //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
 
@@ -714,7 +842,8 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                            mediaPlayer(file,utteranceId,currentLocationName);
+                            //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
 
@@ -723,9 +852,9 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            startOfRoute = false;
-                            menu(currentLocationName);
-                            //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                            mediaPlayer(file,utteranceId,currentLocationName);
+                           // startOfRoute = false;
+                           // menu(currentLocationName);
                         }
                     });
                 }else if (utteranceId.equals("Menu")){
@@ -733,9 +862,9 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                            mytempLocation = currentLocationName;
-                            startVoiceRecognitionActivity();
+                            mediaPlayer(file,utteranceId,currentLocationName);
+                            //mytempLocation = currentLocationName;
+                            //startVoiceRecognitionActivity();
                         }
                     });
                 } else if (utteranceId.equals("Repeat")){
@@ -743,8 +872,9 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            startOfRoute = true;
-                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                            mediaPlayer(file,utteranceId,currentLocationName);
+                            //startOfRoute = true;//?? CHECK!!
+                            //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
                 }else if (utteranceId.equals("OnChoosingRoute")){
@@ -752,7 +882,8 @@ public class MainActivity extends AppCompatActivity {
                             MainActivity.this.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                            launchRoute(currentLocationName);
+                                    mediaPlayer(file,utteranceId,currentLocationName);
+                            //launchRoute(currentLocationName);
                         }
                     });
                 }else if (utteranceId.equals("OnStartText")){
@@ -760,10 +891,13 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            duringRoute = true;
-                            firstTextFlag = false;
-                            secondTextFlag = false;
-                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                            mediaPlayer(file,utteranceId,currentLocationName);
+//                            startOfRoute = false;
+//                            duringRoute = true;
+//                            startTextFlag = true;
+//                            firstTextFlag = false;
+//                            secondTextFlag = false;
+//                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
                 }else if (utteranceId.equals("OnFirstText")){
@@ -771,10 +905,13 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            duringRoute = true;
-                            firstTextFlag = true;
-                            secondTextFlag = false;
-                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                            mediaPlayer(file,utteranceId,currentLocationName);
+//                            startOfRoute = false;
+//                            duringRoute = true;
+//                            startTextFlag = false;
+//                            firstTextFlag = true;
+//                            secondTextFlag = false;
+//                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
                 }else if (utteranceId.equals("OnSecondText")){
@@ -782,10 +919,13 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            duringRoute = true;
-                            firstTextFlag = false;
-                            secondTextFlag = true;
-                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                            mediaPlayer(file,utteranceId,currentLocationName);
+//                            startOfRoute = false;
+//                            duringRoute = true;
+//                            startTextFlag = false;
+//                            firstTextFlag = false;
+//                            secondTextFlag = true;
+//                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
                 }else if (utteranceId.equals("OnEndRoute")){
@@ -793,12 +933,13 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            duringRoute = false;
-                            firstTextFlag = false;
-                            secondTextFlag = false;
-                            mIALocationManager.removeLocationUpdates(mIALocationListener);
-                            endFlag = true;
-                            //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                            mediaPlayer(file,utteranceId,currentLocationName);
+//                            startOfRoute = false;
+//                            duringRoute = false;
+//                            firstTextFlag = false;
+//                            secondTextFlag = false;
+//                            mIALocationManager.removeLocationUpdates(mIALocationListener);
+//                            endFlag = true;
                         }
                     });
                 }
@@ -864,17 +1005,6 @@ public class MainActivity extends AppCompatActivity {
                     mPlayer.seekTo(0);
                 }
             }else{
-                displayTextTwo(14,14);
-                new CountDownTimer(3000, 1000){// 3 seconds count down timer
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                    }
-
-                    @Override
-                    public void onFinish() {
-                        displayTextTwo(13,13);
-                    }
-                }.start();
 
             }
             return super.onDoubleTap(e);
@@ -1073,12 +1203,12 @@ public class MainActivity extends AppCompatActivity {
                   texttospeech(locationString,"OnLocationChangedStart",currentLocationName);
               }else if ((!startOfRoute)&(!duringRoute)&(!locationString.equals("No Location"))) {
                   texttospeech(locationString, "OnLocationChanged", currentLocationName);
-              }else if ((duringRoute)&(!locationString.equals("No Location"))) {
+              }else if ((!startOfRoute)&(duringRoute)&(!firstTextFlag)&(!secondTextFlag)&(!locationString.equals("No Location"))) {
                   launchFirstText(currentLocationName);
                   //Toast.makeText(MainActivity.this, "Location Changing...in route!!", Toast.LENGTH_SHORT).show();
-              }else if ((firstTextFlag)&(!locationString.equals("No Location"))) {
+              }else if ((!startOfRoute)&(duringRoute)&(firstTextFlag)&(!secondTextFlag)&(!locationString.equals("No Location"))) {
                   launchSecondText(currentLocationName);
-              }else if ((secondTextFlag)&(!locationString.equals("No Location"))){
+              }else if ((!startOfRoute)&(duringRoute)&(!firstTextFlag)&(secondTextFlag)&(!locationString.equals("No Location"))){
                   launchEndText(currentLocationName);
 
 
@@ -1429,13 +1559,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             if (myInput.equals("yes go on")){
+                duringRoute = true;
                 mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                 //Need to request Geofence updates but requestGeofenceUpdates not available!!!!
                 //startLeScan(true);
             }else if (match){
-                chooseRoute(mytempLocation,myInput);//Pass myInput which is end location and mytempLocation which is current location and hence start as parameters
+                duringRoute = false;
                 Toast.makeText(MainActivity.this, "START::"+mytempLocation, Toast.LENGTH_SHORT).show();
                 Toast.makeText(MainActivity.this, "END::"+myInput, Toast.LENGTH_SHORT).show();
+                chooseRoute(mytempLocation,myInput);//Pass myInput which is end location and mytempLocation which is current location and hence start as parameters
             }
 
             else{
