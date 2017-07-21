@@ -75,8 +75,6 @@
             android:exported="true">
         </service>
 
-        <activity android:name=".Text_to_Speech">
-        </activity>
     </application>
 
 </manifest>

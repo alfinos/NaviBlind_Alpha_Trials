@@ -20,6 +20,8 @@ public class ParseIndoorAtlas {
     private ArrayList<TextEntry> textdata;
     private ArrayList<WayPointEntry> waypointdata;
     private ArrayList<RoomWayPointEntry> roomwaypointdata;
+    private ArrayList<ConfigEntry> configurationdata;
+    private ArrayList<EventEntry> eventdata;
 
     public ParseIndoorAtlas() {
         this.roomdata = new ArrayList<>();//Initializing Array list on constructor
@@ -27,6 +29,8 @@ public class ParseIndoorAtlas {
         this.textdata = new ArrayList<>();//Initializing Array list on constructor
         this.waypointdata = new ArrayList<>();//Initializing Array list on constructor
         this.roomwaypointdata = new ArrayList<>();//Initializing Array list on constructor
+        this.configurationdata = new ArrayList<>();
+        this.eventdata = new ArrayList<>();
     }
 
     public ArrayList<RoomEntry> getRoomData() {
@@ -47,6 +51,14 @@ public class ParseIndoorAtlas {
 
     public ArrayList<RoomWayPointEntry> getRoomWayPointData() {
         return roomwaypointdata;
+    }
+
+    public ArrayList<ConfigEntry> getConfigurationData(){
+        return configurationdata;
+    }
+
+    public ArrayList<EventEntry> getEventData(){
+        return eventdata;
     }
 
     public boolean parseRoom(String xmlData) {
@@ -109,6 +121,76 @@ public class ParseIndoorAtlas {
             for (RoomEntry mydata1: roomdata){
                 Log.d(TAG, "*************************");
                 Log.d(TAG, mydata1.toString());
+            }
+
+        }catch (Exception e) {
+            status = false;
+            e.printStackTrace();
+        }
+
+        return status;
+    }
+
+    public boolean parseEvent(String xmlData) {
+        boolean status = true;
+        EventEntry currentRecord = null;
+        boolean inEntry = false;
+        String textValue = "";
+
+        try{
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            factory.setNamespaceAware(true);
+            XmlPullParser xpp = factory.newPullParser();
+            xpp.setInput (new StringReader(xmlData));
+            int eventType = xpp.getEventType();
+            while(eventType != XmlPullParser.END_DOCUMENT){
+                String tagName = xpp.getName();
+                switch (eventType){
+                    case XmlPullParser.START_TAG:
+                        Log.d(TAG, "parse: Starting tag for " + tagName);
+                        if ("event".equalsIgnoreCase(tagName)) {
+                            inEntry = true;
+                            currentRecord = new EventEntry();
+                        }
+                        break;
+
+                    case XmlPullParser.TEXT:
+                        textValue = xpp.getText();
+                        break;
+
+                    case XmlPullParser.END_TAG:
+                        Log.d(TAG, "parse: Ending tag for " + tagName);
+                        if(inEntry){
+                            if("event".equalsIgnoreCase(tagName)){
+                                eventdata.add(currentRecord);
+                                inEntry = false;//Ending tag for entry
+                            } else if ("levelNo".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                currentRecord.setLevelnumber(textValue);
+                            } else if ("floorPlanId".equalsIgnoreCase(tagName)){//Guaranteed not to be Null
+                                currentRecord.setFloorplanid(textValue);
+                            } else if ("floordescription".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                currentRecord.setFloordescription(textValue);
+                            }else if ("name".equalsIgnoreCase(tagName)){//Guaranteed not to be Null
+                                currentRecord.setName(textValue);
+                            }else if ("eventdescription".equalsIgnoreCase(tagName)){//Guaranteed not to be Null
+                                currentRecord.setEventdescription(textValue);
+                            } else if ("text".equalsIgnoreCase(tagName)){
+                                currentRecord.setText(textValue);
+                            } else if ("latitude".equalsIgnoreCase(tagName)){
+                                currentRecord.setLatitude(textValue);
+                            } else if ("longitude".equalsIgnoreCase(tagName)){
+                                currentRecord.setLongitude(textValue);
+                            }
+                        }
+                        break;
+                    default: //nothing else to do
+                }
+                eventType = xpp.next();
+            }
+
+            for (EventEntry mydata7: eventdata){
+                Log.d(TAG, "????????????????????????");
+                Log.d(TAG, mydata7.toString());
             }
 
         }catch (Exception e) {
@@ -401,6 +483,68 @@ public class ParseIndoorAtlas {
             for (TextEntry mydata3: textdata){
                 Log.d(TAG, "=====================");
                 Log.d(TAG, mydata3.toString());
+            }
+
+        }catch (Exception e) {
+            status = false;
+            e.printStackTrace();
+        }
+
+        return status;
+    }
+
+    public boolean parseConfiguration(String xmlData) {
+        boolean status = true;
+        ConfigEntry currentRecord = null;
+        boolean inEntry = false;
+        String textValue = "";
+
+        try{
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            factory.setNamespaceAware(true);
+            XmlPullParser xpp = factory.newPullParser();
+            xpp.setInput (new StringReader(xmlData));
+            int eventType = xpp.getEventType();
+            while(eventType != XmlPullParser.END_DOCUMENT){
+                String tagName = xpp.getName();
+                switch (eventType){
+                    case XmlPullParser.START_TAG:
+                        Log.d(TAG, "parse: Starting tag for " + tagName);
+                        if ("parameter".equalsIgnoreCase(tagName)) {
+                            inEntry = true;
+                            currentRecord = new ConfigEntry();
+                        }
+                        break;
+
+                    case XmlPullParser.TEXT:
+                        textValue = xpp.getText();
+                        break;
+
+                    case XmlPullParser.END_TAG:
+                        Log.d(TAG, "parse: Ending tag for " + tagName);
+                        if(inEntry){
+                            if("parameter".equalsIgnoreCase(tagName)){
+                                configurationdata.add(currentRecord);
+                                inEntry = false;//Ending tag for entry
+                            } else if ("defaultinterval".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                currentRecord.setDefaultinterval(textValue);
+                            } else if ("defaultdisplacement".equalsIgnoreCase(tagName)){//Guaranteed not to be Null
+                                currentRecord.setDefaultdisplacement(textValue);
+                            } else if ("defaultaccuracy".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                currentRecord.setDefaultaccuracy(textValue);
+                            } else if ("defaultcurrentdistance".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                currentRecord.setDefaultcurrentdistance(textValue);
+                            }
+                        }
+                        break;
+                    default: //nothing else to do
+                }
+                eventType = xpp.next();
+            }
+
+            for (ConfigEntry mydata6: configurationdata){
+                Log.d(TAG, "..............................");
+                Log.d(TAG, mydata6.toString());
             }
 
         }catch (Exception e) {

@@ -35,10 +35,8 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.indooratlas.android.sdk.IAGeofence;
 import com.indooratlas.android.sdk.IAGeofenceEvent;
 import com.indooratlas.android.sdk.IAGeofenceListener;
-import com.indooratlas.android.sdk.IAGeofenceRequest;
 import com.indooratlas.android.sdk.IALocation;
 import com.indooratlas.android.sdk.IALocationListener;
 import com.indooratlas.android.sdk.IALocationManager;
@@ -54,69 +52,27 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-    private int[] textCommands = {
-            R.string.welcome,//0
-            R.string.main_door,//1
-            R.string.after_main_door,//2
-            R.string.four_steps,//3
-            R.string.narrow_corridor,//4
-            R.string.two_steps,//5
-            R.string.at_two_steps,//6
-            R.string.end_point,//7
-            R.string.response_yes,//8
-            R.string.response_no,//9
-            R.string.yes_or_no,//10
-            R.string.repeat,//11
-            R.string.please_repeat,//12
-            R.string.welcome_two,//13
-            R.string.empty,//14
-            R.string.no_service,//15
-            R.string.try_again,//16
-            R.string.start_point,
-            R.string.narrow_open_doorway//17
-    };
-
-    private int[] audioCommands = {
-            R.raw.after_main_door,//0
-            R.raw.at_two_steps,//1
-            R.raw.end_point,//2
-            R.raw.four_steps,//3
-            R.raw.main_door,//4
-            R.raw.narrow_corridor,//5
-            R.raw.please_repeat,//6
-            R.raw.repeat,//7
-            R.raw.response_no,//8
-            R.raw.response_yes,//9
-            R.raw.two_steps,//10
-            R.raw.welcomemale,//11
-            R.raw.yes_or_no,//12
-            R.raw.welcomemaletwo,//13
-            R.raw.alert,//14
-            R.raw.service_not_ready,//15
-            R.raw.try_again,//16
-            R.raw.start_position,//17
-            R.raw.tick,//18
-            R.raw.metal_metronome,//19
-            R.raw.narrow_open_door//20
+    private int[] audioCommands = {//Array of sounds
+            R.raw.alert,//0
+            R.raw.tick,//1
+            R.raw.metal_metronome,//2
     };
     //Waypoint geo-coordinates in decimal degrees (DD)
-    public double currentDistance_SP = 100d;
-    public double currentDistance_4S = 100d;
-    public double currentDistance_2S = 100d;
-    public double currentDistance_GR = 100d;
-    public double currentDistance_MD = 100d;
-    public double currentDistance = 100d;
-    private static final int REQUEST_CODE = 1234;
+    public double currentDistance = 10000d;//Initialize current distance to a ridiculously large number
+    //private static final int REQUEST_CODE = 1234;
     private final int MY_CODE_PERMISSIONS = 1;
     private static final int PERMISSION_REQUEST_COARSE_BL = 2;
-    private long DEFAULT_INTERVAL = 200L;//milliseconds
-    private float DEFAULT_DISPLACEMENT = 0.8f;//meters
+    //private long DEFAULT_INTERVAL = 200L;//milliseconds
+    //private float DEFAULT_DISPLACEMENT = 0.8f;//meters
+    public long DEFAULT_INTERVAL;
+    public float DEFAULT_DISPLACEMENT;
+    public double DEFAULT_ACCURACY;
+    public double DEFAULT_CURRENT_DISTANCE;
     public IALocationManager mIALocationManager;
     public MediaPlayer mPlayer;
     public SpeechRecognizer mSR;
@@ -126,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
     private ScrollView mScrollView;
     private static final String TAG = "IndoorAtlas";
     private long mRequestStartTime;
-    private int myStartFlag = 2;
     private boolean calibrationOK = false;
     private boolean statusOK = false;
     private boolean permissionOK = false;
@@ -136,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean startTextFlag = false;
     private boolean firstTextFlag = false;
     private boolean secondTextFlag = false;
-
 
     public boolean endFlag = false;
 
@@ -148,19 +102,19 @@ public class MainActivity extends AppCompatActivity {
     public double rssiGR = -17;
     public double rssiSR = -17;
     public double rssiSG = -17;
-    public double metersGR = 1000;
-    public double metersSR = 1000;
-    public double metersSG = 1000;
+    public double metersGR = 10000;//Initialize current distance to a ridiculously large number
+    public double metersSR = 10000;//Initialize current distance to a ridiculously large number
+    public double metersSG = 10000;//Initialize current distance to a ridiculously large number
     private GestureDetectorCompat gestureObject;
     TextToSpeech t1;
     Bundle params = new Bundle();
     public ArrayList<RouteEntry> routeData;
     public ArrayList<WayPointEntry> waypointData;
     public ArrayList<TextEntry> textData;
+    public ArrayList<ConfigEntry> configData;
     public ArrayList<RoomEntry> roomData;
+    public ArrayList<EventEntry> eventData;
     public ArrayList<RoomWayPointEntry> roomwaypointData;
-    public String mystring;
-    public String mystring2;
     public String xmlFile;
     public String introutterance = "";
     public String confirmationutterance = "";
@@ -176,9 +130,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void logText(String msg) {
-        double duration = mRequestStartTime != 0
-                ? (SystemClock.elapsedRealtime() - mRequestStartTime) / 1e3
-                : 0d;
+        //double duration = mRequestStartTime != 0
+        //        ? (SystemClock.elapsedRealtime() - mRequestStartTime) / 1e3
+        //        : 0d;
         mLogging.setText(String.format(Locale.UK, "\n %s", msg));
         mLogging.setTextSize(25);
         mLogging.setTextColor(0xFFFF4046);
@@ -213,15 +167,17 @@ public class MainActivity extends AppCompatActivity {
         String initString = "";
 
         TextEntry myTextObject = textData.get(0);
-        introutterance = myTextObject.getIntrotext();//utteranceId = "0"
-        confirmationutterance = myTextObject.getConfirmationtext();//utteranceId = "1"
-        locationutterance = myTextObject.getLocationtext();//utteranceId = "2"
-        menuutterance = myTextObject.getMenutext();//utteranceId = "3"
-        roomutterance = myTextObject.getRoomtext();//utteranceId = "4"
-        waypointutterance = myTextObject.getWaypointtext();//utteranceId = "5"
-        repatutterance = myTextObject.getRepeattext();//utteranceId = "6"
-        serviceutterance = myTextObject.getServicetext();//utteranceId = "7"
-        routeutterance = myTextObject.getRoutetext();//utteranceId = "8"
+        introutterance = myTextObject.getIntrotext();
+        confirmationutterance = myTextObject.getConfirmationtext();
+        locationutterance = myTextObject.getLocationtext();
+        menuutterance = myTextObject.getMenutext();
+        roomutterance = myTextObject.getRoomtext();
+        waypointutterance = myTextObject.getWaypointtext();
+        repatutterance = myTextObject.getRepeattext();
+        serviceutterance = myTextObject.getServicetext();
+        routeutterance = myTextObject.getRoutetext();
+
+        //checkSpecialEvents();
 
         String id = "85b435a5-971f-47c3-8d33-23831680cca0";
         for (int i = 0; i < roomData.size();i++){
@@ -236,89 +192,84 @@ public class MainActivity extends AppCompatActivity {
         return initString;
     }
 
+    public String checkSpecialEvents(){
+        String eventString = "";
+
+        return  eventString;
+    }
+
     public void menu(String currentLocation){
-        String currentName = "";
         String allLocations = "";
 
         for (int i = 0; i < roomData.size();i++){
             RoomEntry myObject = roomData.get(i);
-            currentName = myObject.getName();
-            allLocations = currentName + "... " + allLocations;
+            String currentName = myObject.getName();
+            String currentDescription = myObject.getRoomdescription();
+            String fullDescription = currentName + " which is " + currentDescription;
+            allLocations = fullDescription + "... " + allLocations;
         }
         texttospeech(menuutterance + "... " +roomutterance +"... " + allLocations,"Menu",currentLocation);
-
     }
 
     public void chooseRoute (String startname,String endname ){
         //Toast.makeText(MainActivity.this, "!START NAME::"+startname, Toast.LENGTH_SHORT).show();
         //Toast.makeText(MainActivity.this, "!END NAME::"+endname, Toast.LENGTH_SHORT).show();
-        String currentStartName = "";
-        String currentEndName = "";
-        String currentDescription = "";
-        String inputString = "";
         //int endnameconvert = Integer.parseInt(endname);
         //Toast.makeText(MainActivity.this, "INDEX AT START OF LOOP::"+chosenRouteIndex, Toast.LENGTH_SHORT).show();
         for (int i = 0; i < routeData.size();i++){
             RouteEntry myObject = routeData.get(i);
-            currentStartName = myObject.getStartpointname().trim();
-            currentEndName = myObject.getEndpointname().trim();
+            String currentStartName = myObject.getStartpointname().trim();
+            String currentEndName = myObject.getEndpointname().trim();
             //int currentEndNameConvert = Integer.parseInt(currentEndName);
             if (currentStartName.equalsIgnoreCase(startname.trim())&& currentEndName.equalsIgnoreCase(endname.trim())){
                 chosenRouteIndex = i;
             }else{
-                //Toast.makeText(MainActivity.this, "Route not found!!!!!!!!!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Route not found!!!!!!!!!", Toast.LENGTH_SHORT).show();
             }
         }
         //Toast.makeText(MainActivity.this, "INDEX OUTSIDE LOOP::"+chosenRouteIndex, Toast.LENGTH_SHORT).show();
         RouteEntry myObject = routeData.get(chosenRouteIndex);
-        currentDescription = myObject.getRoutedescription();
+        String currentDescription = myObject.getRoutedescription();
 
-        inputString = routeutterance + currentDescription;
+        String inputString = routeutterance + currentDescription;
         texttospeech(inputString,"OnChoosingRoute",startname);
-
     }
 
     public void launchRoute(String currentLocation){
-        String startText = "";
         RouteEntry myObject = routeData.get(chosenRouteIndex);
-        startText = myObject.getStartpointtext();
+        String startText = myObject.getStartpointtext();
         texttospeech(startText,"OnStartText",currentLocation);
-
     }
 
     public void launchFirstText(String currentLocation){
-        String firstText = "";
         RouteEntry myObject = routeData.get(chosenRouteIndex);
-        firstText = myObject.getFirstwaypointtext();
+        String firstText = myObject.getFirstwaypointtext();
         texttospeech(firstText,"OnFirstText",currentLocation);
-
     }
 
     public void launchSecondText(String currentLocation){
-        String secondText = "";
         RouteEntry myObject = routeData.get(chosenRouteIndex);
-        secondText = myObject.getSecondwaypointtext();
+        String secondText = myObject.getSecondwaypointtext();
         texttospeech(secondText,"OnSecondText",currentLocation);
-
     }
 
     public void launchEndText(String currentLocation){
-        String endText = "";
         RouteEntry myObject = routeData.get(chosenRouteIndex);
-        endText = myObject.getEndpointtext();
+        String endText = myObject.getEndpointtext();
         texttospeech(endText,"OnEndRoute",currentLocation);
-
     }
+
     private void startLeScan(boolean enable) {
         if (enable) {
-            mScanning = true;
+            mScanning = true;//Start BLE Scan
             scanner.startScan(null, scanSettings, mScanCallback);
         }else{
-            //Stop scan
+            //Stop BLE scan
             mScanning = false;
             scanner.stopScan(mScanCallback);
         }
     }
+
     private double getDistance(double rssi, String location) {//RSSI (dBm) = -10n log10(d) + A and n = 2 for free space and A is average RSSI at 1m
         double A = -60.0;
         if (location.equals("GC")){
@@ -337,7 +288,7 @@ public class MainActivity extends AppCompatActivity {
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
 
-            String advertisingString = byteArrayToHex(result.getScanRecord().getBytes());
+            //String advertisingString = byteArrayToHex(result.getScanRecord().getBytes());
             dName = result.getDevice().getName();
             if (dName != null){
                 dName = (result.getDevice().getName()).trim();
@@ -359,16 +310,6 @@ public class MainActivity extends AppCompatActivity {
                 rssiSG = result.getRssi();
                 metersSG = getDistance(rssiSG,"SG");
             }
-            else
-
-            {
-                //Do nothing
-            }
-
-            //mTextView.setText(String.format(Locale.UK, "\nBLE DISTANCE SR: %.8f,\nBLE DISTANCE GR: %.8f,\nBLE DISTANCE SG: %.8f",
-            //        metersSR,metersGR,metersSG));
-            //mTextView.setTextSize(15);
-
         }
 
         @Override
@@ -382,7 +323,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-
     private void initialiseBluetooth(){
 
         //Check if device does support BT by hardware
@@ -391,7 +331,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "BLUETOOTH NOT SUPPORTED!", Toast.LENGTH_SHORT).show();
             finish();
         }
-
         //Check if device does support BT Low Energy by hardware. Else close the app(finish())!
         if (!getBaseContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             //Toast shows a message on the screen for a LENGTH_SHORT period
@@ -412,120 +351,6 @@ public class MainActivity extends AppCompatActivity {
                     startActivityForResult(enableBTintent, PERMISSION_REQUEST_COARSE_BL);
                 }
             }
-        }
-    }
-
-    private void tryAgain(){
-
-        new CountDownTimer(2000, 1000){//2 second count down timer
-            @Override
-            public void onTick(long millisUntilFinished) {
-                //
-            }
-            @Override
-            public void onFinish() {
-                displayTextTwo(14,14);//Pre-audio alert
-                new CountDownTimer(2000, 1000){//2 second count down timer
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                        //
-                    }
-                    @Override
-                    public void onFinish() {
-                        //displayTextTwo(16,16);//Try again audio
-                        texttospeech(repatutterance,"Repeat","");
-                        new CountDownTimer(6000, 1000){//10 second count down timer
-                            @Override
-                            public void onTick(long millisUntilFinished) {
-                                //Toast.makeText(MainActivity.this, "Timer On...", Toast.LENGTH_SHORT).show();
-                            }
-                            @Override
-                            public void onFinish() {
-                                //Toast.makeText(MainActivity.this, "launch Speech Recognition debug.", Toast.LENGTH_SHORT).show();
-                                startVoiceRecognitionActivity();//Just temporary action
-                            }
-                        }.start();
-                    }
-                }.start();
-            }
-        }.start();
-
-    }
-
-    private void confirmText (final int textCommandIndex, final int audioCommandIndex) {
-
-        mLogging.setText("");
-        mLogging.setText(textCommands[textCommandIndex]);
-        mLogging.setTextSize(35);
-        mLogging.setTextColor(0xFFFFFFFF);
-        mScrollView.smoothScrollBy(0, mLogging.getBottom());
-
-        try {
-            mPlayer = MediaPlayer.create(this,audioCommands[audioCommandIndex]);
-            //activePlayers.add(mPlayer);//Garbage collector issue ....keeping at least one pointer to the instance somewhere
-            AudioAttributes myAttributes = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build();
-            mPlayer.setAudioAttributes(myAttributes);
-            mPlayer.setLooping(false);
-            mPlayer.start();
-            mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    mp.stop();
-                    //activePlayers.remove(mp);
-                    mp.release();
-                    mPlayer = null;
-                    if (textCommandIndex == 3) {
-                        startVoiceRecognitionActivity();//Launch speech recogniser
-                    }else if (textCommandIndex == 5){
-                        startVoiceRecognitionActivity();//Launch speech recogniser
-                    }else if (textCommandIndex == 18) {
-                        startVoiceRecognitionActivity();//Launch speech recogniser
-                    } else {
-              //          Toast.makeText(MainActivity.this, "PLAYBACK COMPLETE - UNDEFINED!!!", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
-
-            mPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                @Override
-                public boolean onError(MediaPlayer mp, int what, int extra) {
-                    Toast.makeText(MainActivity.this, "ERROR!!!!!!", Toast.LENGTH_SHORT).show();
-                    switch (what) {
-                        case MediaPlayer.MEDIA_ERROR_UNKNOWN:
-                            switch (extra) {
-                                case MediaPlayer.MEDIA_ERROR_IO:
-                                    break;
-                                case MediaPlayer.MEDIA_ERROR_MALFORMED:
-                                    break;
-                                case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
-                                    break;
-                                case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
-                                    break;
-                            }
-                            logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra);
-                            break;
-                        case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
-                            switch (extra) {
-                                case MediaPlayer.MEDIA_ERROR_IO:
-                                    break;
-                                case MediaPlayer.MEDIA_ERROR_MALFORMED:
-                                    break;
-                                case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
-                                    break;
-                                case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
-                                    break;
-                            }
-                            logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra);
-                            break;
-                    }
-                    return false;
-                }
-            });
-        } catch (Exception e) {
-            Toast.makeText(MainActivity.this, "Check Wi-Fi connection or audio file missing!!", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -551,12 +376,13 @@ public class MainActivity extends AppCompatActivity {
                    mPlayer = null;
                    file.delete();
 
-
                    switch (utteranceID) {
                        case "OnInitialization":
+                           mIALocationManager.registerRegionListener(mRegionListener);
                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnLocationChanged":
+                           mIALocationManager.registerRegionListener(mRegionListener);
                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnLocationChangedStart":
@@ -569,6 +395,7 @@ public class MainActivity extends AppCompatActivity {
                            break;
                        case "Repeat":
                            startOfRoute = true;//?? CHECK!!
+                           mIALocationManager.registerRegionListener(mRegionListener);
                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnChoosingRoute":
@@ -580,6 +407,7 @@ public class MainActivity extends AppCompatActivity {
                            startTextFlag = true;
                            firstTextFlag = false;
                            secondTextFlag = false;
+                           mIALocationManager.registerRegionListener(mRegionListener);
                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnFirstText":
@@ -588,6 +416,7 @@ public class MainActivity extends AppCompatActivity {
                            startTextFlag = false;
                            firstTextFlag = true;
                            secondTextFlag = false;
+                           mIALocationManager.registerRegionListener(mRegionListener);
                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnSecondText":
@@ -596,6 +425,7 @@ public class MainActivity extends AppCompatActivity {
                            startTextFlag = false;
                            firstTextFlag = false;
                            secondTextFlag = true;
+                           mIALocationManager.registerRegionListener(mRegionListener);
                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnEndRoute":
@@ -604,9 +434,9 @@ public class MainActivity extends AppCompatActivity {
                            firstTextFlag = false;
                            secondTextFlag = false;
                            mIALocationManager.removeLocationUpdates(mIALocationListener);
+                           mIALocationManager.unregisterRegionListener(mRegionListener);
                            endFlag = true;
                            break;
-
                    }
                }
            });
@@ -649,112 +479,25 @@ public class MainActivity extends AppCompatActivity {
        } catch (Exception e) {
            Toast.makeText(MainActivity.this, "Check Wi-Fi connection or audio file missing!!", Toast.LENGTH_LONG).show();
        }
-
-
    }
-    private void displayTextTwo (final int textCommandIndex, final int audioCommandIndex) {
-
-        mLogging.setText("");
-        mLogging.setText(textCommands[textCommandIndex]);
-        mLogging.setTextSize(35);
-        mLogging.setTextColor(0xFFFFFFFF);
-        mScrollView.smoothScrollBy(0, mLogging.getBottom());
+    private void playSound (final int audioCommandIndex) {
 
         try {
             mPlayer = MediaPlayer.create(this,audioCommands[audioCommandIndex]);
-            /*mPlayer = new MediaPlayer();
-            AssetFileDescriptor afd = getApplicationContext().getResources().openRawResourceFd(audioCommands[audioCommandIndex]);
-            //Uri mediaPath = Uri.parse("android.resource://" + getPackageName() + "/" + audioCommands[audioCommandIndex]);
-            mPlayer.setDataSource(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());
-            afd.close();*/
-            //activePlayers.add(mPlayer);//Garbage collector issue ....keeping at least one pointer to the instance somewhere
             AudioAttributes myAttributes = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build();
             mPlayer.setAudioAttributes(myAttributes);
             mPlayer.setLooping(false);
-
-            /*mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {//Running media player on a separate UI thread
-                @Override
-                public void onPrepared(MediaPlayer mp) {//called when media is done preparing
-                    Toast.makeText(MainActivity.this, "PLAYBACK START!!!!!!", Toast.LENGTH_SHORT).show();
-                    mp.start();
-                }
-            });*/
-            //mPlayer.prepareAsync();//Prepares media in the background
             mPlayer.start();
 
             mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
-
-                     mp.stop();
-                    //activePlayers.remove(mp);
-                     //mPlayer.setLooping(true);
+                    mp.stop();
                     mp.release();
-                     mPlayer = null;
-                    if (textCommandIndex == 13) {
-                        startVoiceRecognitionActivity();//Launch speech recogniser
-                    }else if (textCommandIndex == 14 | textCommandIndex == 15 ){
-                        //Do nothing, these are alerts so no action required at end of playback
-                    }else if (textCommandIndex == 17) {
-                        new CountDownTimer(4000, 1000) {// 4 seconds count down timer
-                            @Override
-                            public void onTick(long millisUntilFinished) {
-                            }
-
-                            @Override
-                            public void onFinish() {
-                                confirmText(3, 3);//Confirm 4 steps
-                            }
-                        }.start();
-                    }else if (textCommandIndex == 1){
-                            new CountDownTimer(4000, 1000){// 3 seconds count down timer
-                                @Override
-                                public void onTick(long millisUntilFinished) {
-                                }
-
-                                @Override
-                                public void onFinish() {
-                                    confirmText(3,3);//Confirm 4 steps
-                                }
-                            }.start();
-                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                    }else if (textCommandIndex == 4){
-                        //confirmText(5,10);//Confirm 2 steps
-                        new CountDownTimer(4000, 1000){// 3 seconds count down timer
-                            @Override
-                            public void onTick(long millisUntilFinished) {
-                            }
-
-                            @Override
-                            public void onFinish() {
-                                confirmText(5,10);//Confirm 2 steps
-                            }
-                        }.start();
-                        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                    }else if (textCommandIndex == 6){
-                        //confirmText(18,20);//Confirm final destination
-                        new CountDownTimer(4000, 1000){// 3 seconds count down timer
-                            @Override
-                            public void onTick(long millisUntilFinished) {
-                            }
-
-                            @Override
-                            public void onFinish() {
-                                confirmText(18,20);//Confirm final destination
-                            }
-                        }.start();
-                       // mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                    }else if (textCommandIndex == 7){
-                        endFlag = true;
-                        //mainMenu();
-                       // mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                    }
-                    else {
-                        //Toast.makeText(MainActivity.this, "PLAYBACK COMPLETE - UNDEFINED!!!", Toast.LENGTH_SHORT).show();
-                    }
+                    mPlayer = null;
                 }
             });
 
@@ -797,7 +540,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "Check Wi-Fi connection or audio file missing!!", Toast.LENGTH_LONG).show();
         }
     }
-
     private void texttospeech(final String text, final String utteranceId,final String currentLocationName){
 
         mLogging.setText("");
@@ -996,7 +738,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onTouchEvent(event);
     }
 
-    class DebugGesture extends GestureDetector.SimpleOnGestureListener{
+    private class DebugGesture extends GestureDetector.SimpleOnGestureListener{
 
         @Override
         public boolean onDoubleTap(MotionEvent e) {
@@ -1005,6 +747,22 @@ public class MainActivity extends AppCompatActivity {
                     mPlayer.seekTo(0);
                 }
             }else{
+
+                new CountDownTimer(2000, 1000){// 2 seconds count down timer
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        startOfRoute = true;
+                        endFlag = false;
+                        mIALocationManager.registerRegionListener(mRegionListener);
+                        String initString = initializeTTS();
+                        texttospeech(initString,"OnInitialization","");
+
+                    }
+                }.start();
 
             }
             return super.onDoubleTap(e);
@@ -1043,8 +801,6 @@ public class MainActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions( this, neededPermissions, MY_CODE_PERMISSIONS);
         setContentView(R.layout.activity_main);
 
-        //mYes = (Button) findViewById(R.id.locationButton);//IMP:Rename id to a more meaningful name
-        //mNo = (Button) findViewById(R.id.stopButton);//IMP:Rename id to a more meaningful name
         mLogging = (TextView) findViewById(R.id.mytextView);
         mTextView = (TextView) findViewById(R.id.coordinates);
         mTextView.setTextSize(15);
@@ -1053,7 +809,7 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(TAG, "onCreate: starting Asynctask");
         DownloadXML downloadData = new DownloadXML();
-        downloadData.execute("http://naviblind.000webhostapp.com/main_final_final.xml");
+        downloadData.execute("http://naviblind.000webhostapp.com/configuration.xml");
         Log.d(TAG, "onCreate: done");
 
         params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"");
@@ -1067,31 +823,24 @@ public class MainActivity extends AppCompatActivity {
                                                       .withLongitude(START_POSITION_LON)
                                                       .withAccuracy(75f)
                                                       .withFloorLevel(2).build();*/
-        IALocation location = new IALocation.Builder().withAccuracy(75f).withFloorLevel(2).build();
-        mIALocationManager.setLocation(location);//Explicitly set the the initial fix as specified above*/
-        //Toast.makeText(MainActivity.this, "DEBUG::First fix location set...", Toast.LENGTH_LONG).show();
-
-        IALocationRequest request = IALocationRequest.create();
-        request.setPriority(IALocationRequest.PRIORITY_HIGH_ACCURACY);//High-accuracy updates requested
-        request.setFastestInterval(DEFAULT_INTERVAL);//Explicitly set the fastest interval for location updates in milliseconds
-        request.setSmallestDisplacement(DEFAULT_DISPLACEMENT);//Set the minimum displacement between location updates in meters
-        //Toast.makeText(MainActivity.this, "DEBUG::Interval & Displacement set...", Toast.LENGTH_LONG).show();
+        //IALocation location = new IALocation.Builder().withAccuracy(75f).withFloorLevel(2).build();
+        //mIALocationManager.setLocation(location);//Explicitly set the the initial fix as specified above*/
 
         //Create edges with unique clockwise (lat, lon) points
-        List edges = Arrays.asList(new double[][]{{51.52231720,-0.13089649},{51.52230740,-0.13089247},
-                {51.52231219,-0.13088007},{51.52230218,-0.13087805}});
-        //Create the geofence for 10 seconds in floor number 2
-        IAGeofence geofence = new IAGeofence.Builder()
-                .withEdges(edges)
-                .withFloor(2)
-                .withId("Stairs E GeoFence")
-                .withTransitionType(IAGeofence.GEOFENCE_TRANSITION_ENTER | IAGeofence.GEOFENCE_TRANSITION_EXIT).build();
-
-        IAGeofenceRequest geofenceRequest = new IAGeofenceRequest.Builder()
-                .withGeofence(geofence)
-                .withInitialTrigger(IAGeofenceRequest.INITIAL_TRIGGER_ENTER).build();
-
-        mIALocationManager.addGeofences(geofenceRequest,mIAGeofenceListener);
+//        List edges = Arrays.asList(new double[][]{{51.52231720,-0.13089649},{51.52230740,-0.13089247},
+//                {51.52231219,-0.13088007},{51.52230218,-0.13087805}});
+//        //Create the geofence for 10 seconds in floor number 2
+//        IAGeofence geofence = new IAGeofence.Builder()
+//                .withEdges(edges)
+//                .withFloor(2)
+//                .withId("Stairs E GeoFence")
+//                .withTransitionType(IAGeofence.GEOFENCE_TRANSITION_ENTER | IAGeofence.GEOFENCE_TRANSITION_EXIT).build();
+//
+//        IAGeofenceRequest geofenceRequest = new IAGeofenceRequest.Builder()
+//                .withGeofence(geofence)
+//                .withInitialTrigger(IAGeofenceRequest.INITIAL_TRIGGER_ENTER).build();
+//
+//        mIALocationManager.addGeofences(geofenceRequest,mIAGeofenceListener);
 
         //Create a new instance of SpeechRecognizer using its createSpeechRecognizer() method
         mSR = SpeechRecognizer.createSpeechRecognizer(this);
@@ -1101,20 +850,27 @@ public class MainActivity extends AppCompatActivity {
         initialiseBluetooth();
         initialiseBLE();
         //startLeScan(true);
-        displayTextTwo(14,14);
+        playSound(0);//Play intro sound
 
-
-
-        new CountDownTimer(5000, 1000){// 1.5 seconds count down timer
+        new CountDownTimer(5000, 1000){// 5 seconds count down timer
             @Override
             public void onTick(long millisUntilFinished) {
             }
 
             @Override
             public void onFinish() {
+                ConfigEntry myConfigObject = configData.get(0);
+                DEFAULT_DISPLACEMENT = Float.parseFloat(myConfigObject.getDefaultdisplacement());
+                DEFAULT_INTERVAL = Long.parseLong(myConfigObject.getDefaultinterval());
+                DEFAULT_CURRENT_DISTANCE = Double.parseDouble(myConfigObject.getDefaultcurrentdistance());
+                DEFAULT_ACCURACY = Double.parseDouble(myConfigObject.getDefaultaccuracy());
+                IALocationRequest request = IALocationRequest.create();
+                request.setPriority(IALocationRequest.PRIORITY_HIGH_ACCURACY);//High-accuracy updates requested
+                request.setFastestInterval(DEFAULT_INTERVAL);//Explicitly set the fastest interval for location updates in milliseconds
+                request.setSmallestDisplacement(DEFAULT_DISPLACEMENT);//Set the minimum displacement between location updates in meters
+                mIALocationManager.registerRegionListener(mRegionListener);
                 String initString = initializeTTS();
                 texttospeech(initString,"OnInitialization","");
-
             }
         }.start();
 
@@ -1134,10 +890,8 @@ public class MainActivity extends AppCompatActivity {
 
                     Toast.makeText(MainActivity.this, "Permission denied for coarse location and Wi-Fi status", Toast.LENGTH_SHORT).show();
                 }
-                return;
             }
         }
-
     }
 
     public IAGeofenceListener mIAGeofenceListener = new IAGeofenceListener() {
@@ -1145,9 +899,9 @@ public class MainActivity extends AppCompatActivity {
         public void onGeofencesTriggered(IAGeofenceEvent iaGeofenceEvent) {
             //Do something with the triggered geofences in geoFenceEvent
             Toast.makeText(MainActivity.this, "In GEOFENCE!!!...", Toast.LENGTH_LONG).show();
-            mTextView.setText("Entered Geofence");
-            mTextView.setTextSize(18);
-            mTextView.setTextColor(0xFFFFFFFF);
+            //mTextView.setText("Entered Geofence");
+            //mTextView.setTextSize(18);
+            //mTextView.setTextColor(0xFFFFFFFF);
 
         }
     };
@@ -1156,29 +910,14 @@ public class MainActivity extends AppCompatActivity {
       //Implement an IALocationListener interface and override its onLocationChanged() callback method
       @Override
       public void onLocationChanged(IALocation iaLocation) {
-          //mPlayer = null;
 
-          //Toast.makeText(MainActivity.this, "Location Changing...", Toast.LENGTH_SHORT).show();
           String currentLocationName = "";
           mTextView.setText(String.format(Locale.UK, "Latitude: %.8f,\nLongitude: %.8f,\nAccuracy: %.8f,\nCertainty: %.8f,\nLevel: %d",
                   iaLocation.getLatitude(), iaLocation.getLongitude(),iaLocation.getAccuracy(),iaLocation.getFloorCertainty(),
                   iaLocation.getFloorLevel()));
           mTextView.setTextSize(15);
 
-          /*Haversine havObject = new Haversine(); //Create the Haversine object
-          currentDistance_SP = 1000*(havObject.distance(iaLocation.getLatitude(),iaLocation.getLongitude(),START_POSITION_LAT,START_POSITION_LON));
-          currentDistance_4S = 1000*(havObject.distance(iaLocation.getLatitude(),iaLocation.getLongitude(),FOUR_STEPS_LAT,FOUR_STEPS_LON));
-          currentDistance_2S = 1000*(havObject.distance(iaLocation.getLatitude(),iaLocation.getLongitude(),TWO_STEPS_LAT,TWO_STEPS_LON));
-          currentDistance_GR = 1000*(havObject.distance(iaLocation.getLatitude(),iaLocation.getLongitude(),GR_OFFICE_LAT,GR_OFFICE_LON));
-          currentDistance_MD = 1000*(havObject.distance(iaLocation.getLatitude(),iaLocation.getLongitude(),MAIN_DOOR_LAT,MAIN_DOOR_LON));*/
-
-          //mLogging.setText("");
-          /*mLogging.setText(String.valueOf(" SP: " + currentDistance_SP + ",\n MD: " + currentDistance_MD + ",\n 4S: " + currentDistance_4S + ",\n 2S: " + currentDistance_2S + ",\n GR: " + currentDistance_GR));
-          mLogging.setTextSize(20);
-          mLogging.setTextColor(0xFFFF4046);
-          mScrollView.smoothScrollBy(0, mLogging.getBottom());*/
-
-          if (iaLocation.getFloorLevel() == 2 && iaLocation.getAccuracy()<=5) {
+          if (iaLocation.getAccuracy() <= DEFAULT_ACCURACY) { //iaLocation.getFloorLevel() == 2 && iaLocation.getAccuracy()<=5
               String locationString = "No Location";
               for (int i = 0; i < roomwaypointData.size();i++){
                   RoomWayPointEntry myObject = roomwaypointData.get(i);
@@ -1187,7 +926,7 @@ public class MainActivity extends AppCompatActivity {
                   Haversine haversineObject = new Haversine(); //Create the Haversine object
                   currentDistance = 1000*(haversineObject.distance(iaLocation.getLatitude(),iaLocation.getLongitude(),comparelatitude,comparelongitude));
 
-                  if (currentDistance <=2.5){
+                  if (currentDistance <= DEFAULT_CURRENT_DISTANCE){
                       String textutternace = myObject.getText();
                       String descriptionutternace = myObject.getDescription();
                       currentLocationName = myObject.getName();
@@ -1197,6 +936,7 @@ public class MainActivity extends AppCompatActivity {
               }
               if (!locationString.equals("No Location")){
               mIALocationManager.removeLocationUpdates(mIALocationListener);
+                  mIALocationManager.unregisterRegionListener(mRegionListener);
               }
 
               if ((startOfRoute)&(!duringRoute)&(!locationString.equals("No Location"))){
@@ -1211,75 +951,13 @@ public class MainActivity extends AppCompatActivity {
               }else if ((!startOfRoute)&(duringRoute)&(!firstTextFlag)&(secondTextFlag)&(!locationString.equals("No Location"))){
                   launchEndText(currentLocationName);
 
-
               }else {
-                  displayTextTwo(15, 18);
+                  playSound(1);//Play tick sound
               }
           } else {
-              displayTextTwo(15, 18);
+              playSound(1);//Play tick sound
               //texttospeech(serviceutterance,"OnNoService");
           }
-
-
-          //if (calibrationOK && statusOK && permissionOK && iaLocation.getFloorLevel() == 2 && iaLocation.getAccuracy()<=15) {
-          /*if (iaLocation.getFloorLevel() == 2 && iaLocation.getAccuracy()<=7) {
-              //Toast.makeText(MainActivity.this, "SERVICE RUNNING OK", Toast.LENGTH_SHORT).show();
-            //Geofence for Stairs E/Starting Point area
-            if (currentDistance_SP <= 4.5) {
-                mIALocationManager.removeLocationUpdates(mIALocationListener);
-                //startLeScan(false);
-                //Toast.makeText(MainActivity.this, "BLE OFF!", Toast.LENGTH_SHORT).show();
-                displayTextTwo(17,17);
-            //Geofence for 4 steps/near toilets
-            } else if (currentDistance_4S <=4.5){
-                mIALocationManager.removeLocationUpdates(mIALocationListener);
-                //startLeScan(false);
-                //Toast.makeText(MainActivity.this, "BLE OFF!", Toast.LENGTH_SHORT).show();
-                displayTextTwo(4,5);
-            //Geofence near 2 steps/stairs D
-            } else if (currentDistance_2S <=4.5 ) {
-                mIALocationManager.removeLocationUpdates(mIALocationListener);
-                //startLeScan(false);
-                //Toast.makeText(MainActivity.this, "BLE OFF!", Toast.LENGTH_SHORT).show();
-                displayTextTwo(6, 1);
-            //Geofence near lifts/staff room/stairs B
-            } else if (currentDistance_MD <=4.5) {
-                    mIALocationManager.removeLocationUpdates(mIALocationListener);
-                    //startLeScan(false);
-                    //Toast.makeText(MainActivity.this, "BLE OFF!", Toast.LENGTH_SHORT).show();
-                    displayTextTwo(1,4);//Lifts text and audio
-            }//Geofence room 267
-            else if (currentDistance_GR <=4.5) {
-                mIALocationManager.removeLocationUpdates(mIALocationListener);
-                //startLeScan(false);
-                //Toast.makeText(MainActivity.this, "BLE OFF!", Toast.LENGTH_SHORT).show();
-                displayTextTwo(7,2);
-            }
-          } else if(iaLocation.getAccuracy()>7) {
-              displayTextTwo(15, 18);
-              if (metersSR <= 10) {//Geofence next to lift
-                  mTextView.setText("Meters from SR Beacon:" + metersSR);
-                  mTextView.setTextSize(20);
-                  mTextView.setTextColor(0xFFFFFFFF);
-                  mIALocationManager.removeLocationUpdates(mIALocationListener);
-                  //startLeScan(false);
-                  //Toast.makeText(MainActivity.this, "BLE OFF!", Toast.LENGTH_SHORT).show();
-                  displayTextTwo(1, 4);//Lifts text and audio
-              }//Geofence room 267
-              else if (metersGR <= 5) {
-                  mTextView.setText("Meters from GR Beacon:" + metersGR);
-                  mTextView.setTextSize(20);
-                  mTextView.setTextColor(0xFFFFFFFF);
-                  mIALocationManager.removeLocationUpdates(mIALocationListener);
-                  //startLeScan(false);
-                  //Toast.makeText(MainActivity.this, "BLE OFF!", Toast.LENGTH_SHORT).show();
-                  displayTextTwo(7, 2);
-                  //Toast.makeText(MainActivity.this, "WAIT FOR SERVICE!!!!!", Toast.LENGTH_SHORT).show();
-              }
-          }else {
-              displayTextTwo(15, 18);
-              //texttospeech(serviceutterance,"7");
-          }*/
       }
 
       @Override
@@ -1313,26 +991,24 @@ public class MainActivity extends AppCompatActivity {
               case IALocationManager.STATUS_LIMITED:
                   logText("Status: Limited");
                   statusOK = true;
-                  displayTextTwo(15, 18);
+                  playSound(1);//Play tick sound
                   break;
               case IALocationManager.STATUS_OUT_OF_SERVICE:
                   logText("Status: Out of service");
                   statusOK = false;
-                  displayTextTwo(15, 18);
+                  playSound(1);//Play tick sound
                   break;
               case IALocationManager.STATUS_TEMPORARILY_UNAVAILABLE:
                   logText("Status: Temporarily unavailable");
-                  displayTextTwo(15, 18);
+                  playSound(1);//Play tick sound
                   statusOK = false;
           }
-
       }
   };
 
     private IARegion.Listener mRegionListener = new IARegion.Listener() {
         @Override
         public void onEnterRegion(IARegion iaRegion) {
-            String floorutterance = "";
             if (iaRegion.getType() == IARegion.TYPE_FLOOR_PLAN) {
                 String id = iaRegion.getId();
                 Log.d(TAG, "floorPlan changed to " + id);
@@ -1340,7 +1016,7 @@ public class MainActivity extends AppCompatActivity {
                     RoomEntry myObject = roomData.get(i);
                     String currentplanid = myObject.getFloorplanid();
                     if (currentplanid.equals(id)){
-                        floorutterance = myObject.getFloordescription();
+                        String floorutterance = myObject.getFloordescription();
                         mTextView.setText("FLOOR MATCH:: " + floorutterance);
                         mTextView.setTextSize(15);
                         break;
@@ -1360,7 +1036,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onExitRegion(IARegion iaRegion) {
             // leaving a previously entered region
-            String floorutterance = "";
             if (iaRegion.getType() == IARegion.TYPE_FLOOR_PLAN) {
                 String id = iaRegion.getId();
                 Log.d(TAG, "floorPlan changed to " + id);
@@ -1368,7 +1043,7 @@ public class MainActivity extends AppCompatActivity {
                     RoomEntry myObject = roomData.get(i);
                     String currentplanid = myObject.getFloorplanid();
                     if (currentplanid.equals(id)){
-                        floorutterance = myObject.getFloordescription();
+                        String floorutterance = myObject.getFloordescription();
                         mTextView.setText("FLOOR MATCH:: " + floorutterance);
                         mTextView.setTextSize(15);
                         break;
@@ -1387,11 +1062,10 @@ public class MainActivity extends AppCompatActivity {
         {
             mPlayer.start();
         }
+
         super.onResume();
         //Toast.makeText(MainActivity.this, "DEBUG::onResume() callback...", Toast.LENGTH_LONG).show();
         mRequestStartTime = SystemClock.elapsedRealtime();
-        //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-        mIALocationManager.registerRegionListener(mRegionListener);
         startLeScan(true);
     }
 
@@ -1413,14 +1087,10 @@ public class MainActivity extends AppCompatActivity {
         mIALocationManager.removeGeofenceUpdates(mIAGeofenceListener);
         mIALocationManager.unregisterRegionListener(mRegionListener);
         startLeScan(false);
-        //mPlayer.pause();
-        //mPlayer.release();//releasing and nullifying MediaPLayer
-        //mPlayer = null;
     }
 
     @Override
     protected void onDestroy() {
-        //Toast.makeText(MainActivity.this, "DEBUG::onDestroy() callback...", Toast.LENGTH_LONG).show();
         mIALocationManager.destroy();
         startLeScan(false);
         super.onDestroy();
@@ -1432,7 +1102,6 @@ public class MainActivity extends AppCompatActivity {
             t1.stop();
             t1.shutdown();
         }
-        //mPlayer = null;
     }
 
     @Override
@@ -1450,23 +1119,24 @@ public class MainActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
             case R.id.menu_item_floor_plan:
-                Toast.makeText(MainActivity.this, "launch Floor Plan debug.", Toast.LENGTH_LONG).show();
                 Intent i = new Intent(MainActivity.this, FloorPlanActivity.class);
-                //Intent i = new Intent(MainActivity.this, TestActivity.class);
                 startActivity(i);
+                if(mPlayer != null && mPlayer.isPlaying())
+                {
+                    mPlayer.pause();
+                }
                 return true;
-            case R.id.menu_text_to_speech:
-                Toast.makeText(MainActivity.this, "Text to Speech...", Toast.LENGTH_LONG).show();
-                Intent tts = new Intent(MainActivity.this, Text_to_Speech.class);
-                startActivity(tts);
-                return true;
+
             case R.id.menu_item_BLE:
-                Toast.makeText(MainActivity.this, "BLE Scanning...", Toast.LENGTH_LONG).show();
                 Intent k = new Intent(MainActivity.this, BluetoothScanner.class);
                 startActivity(k);
+                if(mPlayer != null && mPlayer.isPlaying())
+                {
+                    mPlayer.pause();
+                }
                 return true;
+
             case R.id.menu_test_activity:
-                Toast.makeText(MainActivity.this, "Testing...", Toast.LENGTH_LONG).show();
                 Intent m = new Intent(MainActivity.this, TestActivity.class);
                 startActivity(m);
                 if(mPlayer != null && mPlayer.isPlaying())
@@ -1474,10 +1144,7 @@ public class MainActivity extends AppCompatActivity {
                     mPlayer.pause();
                 }
                 return true;
-            case R.id.menu_item_test_speech:
-                Toast.makeText(MainActivity.this, "launch Speech Recognition debug.", Toast.LENGTH_LONG).show();
-                startVoiceRecognitionActivity();//Just temporary action
-                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -1488,31 +1155,26 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReadyForSpeech(Bundle params) {
             Log.d(TAG, "onReadyForSpeech");
-
         }
 
         @Override
         public void onBeginningOfSpeech() {
             Log.d(TAG, "onBeginningOfSpeech");
-
         }
 
         @Override
         public void onRmsChanged(float rmsdB) {
             Log.d(TAG, "onRmsChanged");
-
         }
 
         @Override
         public void onBufferReceived(byte[] buffer) {
             Log.d(TAG, "onBufferReceived");
-
         }
 
         @Override
         public void onEndOfSpeech() {
             Log.d(TAG, "onEndofSpeech");
-
         }
 
         @Override
@@ -1523,9 +1185,8 @@ public class MainActivity extends AppCompatActivity {
             mLogging.setTextSize(20);
             mLogging.setTextColor(0xFFFF4046);
             mScrollView.smoothScrollBy(0, mLogging.getBottom());
-            texttospeech(repatutterance,"Repeat","");
             //long startTime = System.currentTimeMillis();
-            //tryAgain();
+            texttospeech(repatutterance,"Repeat","");
             //long estimatedTime = System.currentTimeMillis() - startTime;
         }
 
@@ -1533,26 +1194,21 @@ public class MainActivity extends AppCompatActivity {
         public void onResults(Bundle results) {
             Log.d(TAG, "onResults " + results);
 
-            //String mystr = new String();
-
             ArrayList data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
             String input = data.get(0).toString();
             String myInput = input.trim();
             mLogging.setText("");
             mLogging.setText(String.format(Locale.UK, "\n %s", "You said : " + myInput));
-            mLogging.setText("You said : " + input);
             mLogging.setTextSize(35);
             mLogging.setTextColor(0xFFFFFFFF);
             mScrollView.smoothScrollBy(0, mLogging.getBottom());
             currentDistance = 100d;
-
-            String currentName = "";
             boolean match = false;
             Toast.makeText(MainActivity.this, "DEBUG::" + myInput, Toast.LENGTH_SHORT).show();
 
             for (int i = 0; i < roomData.size();i++){
                 RoomEntry myObject = roomData.get(i);
-                currentName = myObject.getName();
+                String currentName = myObject.getName();
                 currentName = currentName.trim();
                 if (myInput.equalsIgnoreCase(currentName)){
                     match = true;
@@ -1581,7 +1237,6 @@ public class MainActivity extends AppCompatActivity {
         public void onPartialResults(Bundle partialResults) {
             Log.d(TAG, "onPartialResults");
 
-            //tryAgain();
             texttospeech(repatutterance,"Repeat","");
             //introduction();
             //for (int i = 0; i < data.size(); i++)
@@ -1595,9 +1250,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onEvent(int eventType, Bundle params) {
             Log.d(TAG, "onEvent " + eventType);
-            //tryAgain();
             texttospeech(repatutterance,"Repeat","");
-
         }
     }
 
@@ -1613,24 +1266,23 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1);
         intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,2000);
         intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,8000);
-        //Toast.makeText(MainActivity.this, "DEBUG::Launch startListening()", Toast.LENGTH_SHORT).show();
         mSR.startListening(intent);
 
         //startActivityForResult(intent, REQUEST_CODE);//Start an activity and get a result back
         //When user is done, onActivityResult() method is called
     }
 
-    @Override
-    //INPUT: Request code passed to startActivityForResult(), resultCode is either RESULT_OK or RESULT_CANCELED
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK)
-        {
-            // Populate the wordsList with the String values the recognition engine thought it heard
-            ArrayList<String> matches = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-            //mwordsList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, matches));
-        }
-        super.onActivityResult(requestCode, resultCode, data);
-    }
+//    @Override
+//    //INPUT: Request code passed to startActivityForResult(), resultCode is either RESULT_OK or RESULT_CANCELED
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK)
+//        {
+//            // Populate the wordsList with the String values the recognition engine thought it heard
+//            ArrayList<String> matches = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+//            //mwordsList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, matches));
+//        }
+//        super.onActivityResult(requestCode, resultCode, data);
+//    }
 
     private class DownloadXML extends AsyncTask<String,Void,String> {
         private static final String TAG = "DownloadData";
@@ -1645,6 +1297,9 @@ public class MainActivity extends AppCompatActivity {
             parseIndoorAtlas.parseText(xmlFile);
             textData = parseIndoorAtlas.getTextData();
 
+            parseIndoorAtlas.parseConfiguration(xmlFile);
+            configData = parseIndoorAtlas.getConfigurationData();
+
             parseIndoorAtlas.parseRoomWayPoint(xmlFile);
             roomwaypointData = parseIndoorAtlas.getRoomWayPointData();//Retreive both room and waypoint data
 
@@ -1657,6 +1312,8 @@ public class MainActivity extends AppCompatActivity {
             parseIndoorAtlas.parseWayPoint(xmlFile);
             waypointData = parseIndoorAtlas.getWayPointData();//Get waypoint data only
 
+            parseIndoorAtlas.parseEvent(xmlFile);
+            eventData = parseIndoorAtlas.getEventData();//Get events data if any available
         }
 
         @Override
