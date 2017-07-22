@@ -73,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
     public float DEFAULT_DISPLACEMENT;
     public double DEFAULT_ACCURACY;
     public double DEFAULT_CURRENT_DISTANCE;
+    public float DEFAULT_SPEECH_RATE;
+    public float DEFAULT_PITCH;
     public IALocationManager mIALocationManager;
     public MediaPlayer mPlayer;
     public SpeechRecognizer mSR;
@@ -554,8 +556,8 @@ public class MainActivity extends AppCompatActivity {
             public void onInit(int status) {
                 if(status != TextToSpeech.ERROR){
                     t1.setLanguage(Locale.UK);
-                    t1.setSpeechRate(0.8f);
-                    t1.setPitch(0.8f);
+                    t1.setSpeechRate(DEFAULT_SPEECH_RATE);
+                    t1.setPitch(DEFAULT_PITCH);
                     t1.synthesizeToFile(text,params,file,utteranceId);
                     //t1.speak(text,TextToSpeech.QUEUE_FLUSH,params,utteranceId);
                 }
@@ -864,6 +866,9 @@ public class MainActivity extends AppCompatActivity {
                 DEFAULT_INTERVAL = Long.parseLong(myConfigObject.getDefaultinterval());
                 DEFAULT_CURRENT_DISTANCE = Double.parseDouble(myConfigObject.getDefaultcurrentdistance());
                 DEFAULT_ACCURACY = Double.parseDouble(myConfigObject.getDefaultaccuracy());
+                DEFAULT_SPEECH_RATE = Float.parseFloat(myConfigObject.getDefaultspeechrate());
+                DEFAULT_PITCH = Float.parseFloat(myConfigObject.getDefaultpitch());
+
                 IALocationRequest request = IALocationRequest.create();
                 request.setPriority(IALocationRequest.PRIORITY_HIGH_ACCURACY);//High-accuracy updates requested
                 request.setFastestInterval(DEFAULT_INTERVAL);//Explicitly set the fastest interval for location updates in milliseconds
@@ -1359,12 +1364,15 @@ public class MainActivity extends AppCompatActivity {
 
             } catch (MalformedURLException e) {
                 Log.e(TAG, "downloadXML: Invalid URL " + e.getMessage());
+                Toast.makeText(MainActivity.this,"downloadXML: Invalid URL. Please fix configuration file and relaunch Naviblind" , Toast.LENGTH_SHORT).show();
 
             } catch (IOException e){
                 Log.e(TAG, "downloadXML: IO Exception reading data: " + e.getMessage());
+                Toast.makeText(MainActivity.this,"downloadXML: IO Exception reading data. Please fix configuration file and relaunch Naviblind" , Toast.LENGTH_SHORT).show();
 
             } catch (SecurityException e){
                 Log.e(TAG, "downloadXML: Security Exception. Needs Permission! " + e.getMessage());
+                Toast.makeText(MainActivity.this,"downloadXML: Security Exception. Needs Permission. Please fix configuration file and relaunch Naviblind" , Toast.LENGTH_SHORT).show();
                 //e.printStackTrace();
             }
 
