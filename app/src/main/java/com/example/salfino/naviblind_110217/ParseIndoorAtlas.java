@@ -542,10 +542,18 @@ public class ParseIndoorAtlas {
                                 currentRecord.setDefaultaccuracy(textValue);
                             } else if ("defaultcurrentdistance".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
                                 currentRecord.setDefaultcurrentdistance(textValue);
-                            }else if ("defaultspeechrate".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                            } else if ("defaultspeechrate".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
                                 currentRecord.setDefaultspeechrate(textValue);
-                            }else if ("defaultpitch".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
-                                    currentRecord.setDefaultpitch(textValue);
+                            } else if ("defaultpitch".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                currentRecord.setDefaultpitch(textValue);
+                            } else if ("firstfixlatitude".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                currentRecord.setFirstfixlatitude(textValue);
+                            } else if ("firstfixlongitude".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                currentRecord.setFirstfixlongitude(textValue);
+                            } else if ("firstfixfloor".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                currentRecord.setFirstfixfloor(textValue);
+                            } else if ("firstfixaccuracy".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                    currentRecord.setFirstfixaccuracy(textValue);
                         }
                         }
                         break;
