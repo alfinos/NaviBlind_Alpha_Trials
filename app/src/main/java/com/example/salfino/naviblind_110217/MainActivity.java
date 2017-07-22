@@ -75,6 +75,10 @@ public class MainActivity extends AppCompatActivity {
     public double DEFAULT_CURRENT_DISTANCE;
     public float DEFAULT_SPEECH_RATE;
     public float DEFAULT_PITCH;
+    public double DEFAULT_FF_LATITUDE;
+    public double DEFAULT_FF_LONGITUDE;
+    public int DEFAULT_FF_FLOOR;
+    public float DEFAULT_FF_ACCURACY;
     public IALocationManager mIALocationManager;
     public MediaPlayer mPlayer;
     public SpeechRecognizer mSR;
@@ -455,6 +459,7 @@ public class MainActivity extends AppCompatActivity {
                            launchRoute(currentLocationName);
                            break;
                        case "OnStartText":
+                           mRequestStartTime = SystemClock.elapsedRealtime();
                            startOfRoute = false;
                            duringRoute = true;
                            startTextFlag = true;
@@ -496,6 +501,10 @@ public class MainActivity extends AppCompatActivity {
                            mIALocationManager.unregisterRegionListener(mRegionListener);
                            endFlag = true;
                            playSound(2);
+                           double duration = mRequestStartTime != 0
+                                  ? (SystemClock.elapsedRealtime() - mRequestStartTime) / 1e3
+                                   : 0d;
+                           Toast.makeText(MainActivity.this, "Elapsed Time :" + duration, Toast.LENGTH_SHORT).show();
                            break;
                        case "OnNoRouteConfigured":
                            startOfRoute = false;
@@ -993,6 +1002,16 @@ public class MainActivity extends AppCompatActivity {
                 DEFAULT_ACCURACY = Double.parseDouble(myConfigObject.getDefaultaccuracy());
                 DEFAULT_SPEECH_RATE = Float.parseFloat(myConfigObject.getDefaultspeechrate());
                 DEFAULT_PITCH = Float.parseFloat(myConfigObject.getDefaultpitch());
+                DEFAULT_FF_LATITUDE = Double.parseDouble(myConfigObject.getFirstfixlatitude());
+                DEFAULT_FF_LONGITUDE = Double.parseDouble(myConfigObject.getFirstfixlongitude());
+                DEFAULT_FF_FLOOR = Integer.parseInt(myConfigObject.getFirstfixfloor());
+                DEFAULT_FF_ACCURACY = Float.parseFloat(myConfigObject.getFirstfixaccuracy());
+
+                /*IALocation location = new IALocation.Builder().withLatitude(DEFAULT_FF_LATITUDE)
+                        .withLongitude(DEFAULT_FF_LONGITUDE)
+                        .withAccuracy(DEFAULT_FF_ACCURACY)
+                        .withFloorLevel(DEFAULT_FF_FLOOR).build();
+                mIALocationManager.setLocation(location);//Explicitly set the the initial fix as specified in configuration file*/
 
                 IALocationRequest request = IALocationRequest.create();//Set High accuracy as priority and fastest interval and default displacement
                 request.setPriority(IALocationRequest.PRIORITY_HIGH_ACCURACY);//High-accuracy updates requested
@@ -1154,12 +1173,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 IALocation location = new IALocation.Builder()
-                        .withFloorLevel(2).build();
-                mIALocationManager.setLocation(location);//Explicitly set floor level to 2
-                //Toast.makeText(MainActivity.this, "REGION CHANGE: " + id, Toast.LENGTH_SHORT).show();
-                //IALocation location = new IALocation.Builder()
-                //        .withFloorLevel(2).build();
-                //mIALocationManager.setLocation(location);//Explicitly set floor level to 2
+                        .withFloorLevel(DEFAULT_FF_FLOOR).build();
+                mIALocationManager.setLocation(location);//Explicitly set floor level to default
             }
         }
 
@@ -1181,8 +1196,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 IALocation location = new IALocation.Builder()
-                        .withFloorLevel(2).build();
-                mIALocationManager.setLocation(location);//Explicitly set floor level to 2
+                        .withFloorLevel(DEFAULT_FF_FLOOR).build();
+                mIALocationManager.setLocation(location);//Explicitly set floor level to default
             }
         }
     };
@@ -1195,7 +1210,7 @@ public class MainActivity extends AppCompatActivity {
 
         super.onResume();
         //Toast.makeText(MainActivity.this, "DEBUG::onResume() callback...", Toast.LENGTH_LONG).show();
-        mRequestStartTime = SystemClock.elapsedRealtime();
+        //mRequestStartTime = SystemClock.elapsedRealtime();
         startLeScan(true);
     }
 
