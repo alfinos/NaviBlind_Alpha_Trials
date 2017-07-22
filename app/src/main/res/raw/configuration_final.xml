@@ -7,10 +7,14 @@
     <parameter>
       <defaultinterval>200</defaultinterval>
       <defaultdisplacement>0.8</defaultdisplacement> 
-      <defaultaccuracy>5</defaultaccuracy>
-      <defaultcurrentdistance>2.5</defaultcurrentdistance>
+      <defaultaccuracy>7</defaultaccuracy>                   <!-->Was 5<-->
+      <defaultcurrentdistance>5</defaultcurrentdistance>     <!-->Was 2.5<-->
       <defaultspeechrate>0.8</defaultspeechrate>
-      <defaultpitch>0.8</defaultpitch>   
+      <defaultpitch>0.8</defaultpitch> 
+      <firstfixlatitude>51.52231720</firstfixlatitude>       <!-->First Fix Stairs E...<-->
+      <firstfixlongitude>-0.13089649</firstfixlongitude>
+      <firstfixfloor>2</firstfixfloor> 
+      <firstfixaccuracy>75</firstfixaccuracy>
     </parameter>
     
 <!-->////////////////////////////////////////////////////////////////////////////////////////////////////////////////<-->
@@ -98,8 +102,8 @@
         <floordescription>Second floor computer science department...   with researcher's offices... , administration office... , system's group office...  and lecture rooms... </floordescription>
         <name>Stairs D</name>
         <waypointdescription>Fire exit stairs on 2nd floor labelled as stairs D</waypointdescription>
-        <latitude>51.52229634</latitude>
-        <longitude>-0.13057329</longitude>
+        <latitude>51.52230552</latitude>
+        <longitude>-0.13055116</longitude>
         <text>You are at waypoint stairs D</text>
       </waypoint>
       
@@ -248,13 +252,13 @@
                 step sub-level stairway down to the main corridor... this corridor is narrow and long, keep
                 walking forward for about... twenty five more steps... at the end of this corridor take the
                 sub-level stairways containing two steps up and turn to the... right... towards room number two six six.</firsttext>
-      <firstconfirmation>Confirm the presence of the... four step sub-level stairway... </firstconfirmation>         
+      <firstconfirmation>Confirm the presence of the... four step sub-level stairway...when you get there... </firstconfirmation>         
       <secondname>Two steps sub-level stairway</secondname>
       <secondtext>Use the hand rails... and take the sub-level stairways containing
                 two steps up and turn to the... right... towards room number two six six... keep walking forward for
                 about fifteen more steps... room number two six six is at the end of this corridor,
                 to the left passed a narrow open doorway.</secondtext>
-      <secondconfirmation>Confirm the presence of the... two step sub-level stairway... </secondconfirmation>
+      <secondconfirmation>Confirm the presence of the... two step sub-level stairway...when you get there... </secondconfirmation>
       <endname>266</endname>
       <endtext>You have arrived to room number two six six... 
                 which has its door to your left</endtext>
@@ -272,13 +276,13 @@
                 step sub-level stairway down to the main corridor... this corridor is narrow and long, keep
                 walking forward for about... twenty five more steps... at the end of this corridor take the
                 sub-level stairways containing four steps up and turn to the... right... towards Level 2 Stairs E.</firsttext>
-      <firstconfirmation>Confirm the presence of the... two step sub-level stairway... </firstconfirmation> 
+      <firstconfirmation>Confirm the presence of the... two step sub-level stairway... when you get there... </firstconfirmation> 
       <secondname>Four steps sub-level stairway</secondname>
       <secondtext>Use the hand rails... and take the sub-level stairways containing
                 Four steps up and turn to the... right... towards waypoint Level 2 Stairs E... keep walking forward for
                 about twenty more steps... waypoint Level 2 Stairs E is at the end of this corridor,
                 straight ahead passed an emergency door which is normally closed.</secondtext>
-      <secondconfirmation>Confirm the presence of the... four step sub-level stairway... </secondconfirmation>
+      <secondconfirmation>Confirm the presence of the... four step sub-level stairway... when you get there... </secondconfirmation>
       <endname>Stairs E</endname>
       <endtext>You have arrived to waypoint labelled as Level 2 Stairs E</endtext>
     </route>
@@ -296,12 +300,12 @@
                 step sub-level stairway down to the main corridor... this corridor is narrow and long, keep
                 walking forward for about... twenty five more steps... at the end of this corridor take the
                 sub-level stairways containing two steps up and turn to the... left... towards room number two six three.</firsttext>
-      <firstconfirmation>Confirm the presence of the... four step sub-level stairway... </firstconfirmation> 
+      <firstconfirmation>Confirm the presence of the... four step sub-level stairway... when you get there... </firstconfirmation> 
       <secondname>Two steps sub-level stairway</secondname>
       <secondtext>Use the hand rails... and take the sub-level stairways containing
                 two steps up and turn to the... left... towards room number two six three... keep walking forward for
                 about three more steps... room number two six three is to your right... </secondtext>
-      <secondconfirmation>Confirm the presence of the... two step sub-level stairway... </secondconfirmation>
+      <secondconfirmation>Confirm the presence of the... two step sub-level stairway... when you get there... </secondconfirmation>
       <endname>263</endname>
       <endtext>You have arrived to room number two six three... 
                 which has its door to your right</endtext>
@@ -320,13 +324,13 @@
                 step sub-level stairway down to the main corridor... this corridor is narrow and long, keep
                 walking forward for about... twenty five more steps... at the end of this corridor take the
                 sub-level stairways containing four steps up and turn to the... right... towards waypoint labelled as Level 2 Stairs E.</firsttext>
-      <firstconfirmation>Confirm the presence of the... two step sub-level stairway... </firstconfirmation>           
+      <firstconfirmation>Confirm the presence of the... two step sub-level stairway... when you get there... </firstconfirmation>           
       <secondname>Four steps sub-level stairway</secondname>
       <secondtext>Use the hand rails... and take the sub-level stairways containing
                 four steps up and turn to the... right... towards waypoint labelled as Level 2 Stairs E... keep walking forward for
                 about twenty more steps... waypoint Level 2 Stairs E is at the end of this corridor,
                 straight ahead passed an emergency door which is normally closed... </secondtext>
-      <secondconfirmation>Confirm the presence of the... four step sub-level stairway... </secondconfirmation>
+      <secondconfirmation>Confirm the presence of the... four step sub-level stairway... when you get there... </secondconfirmation>
       <endname>Stairs E</endname>
       <endtext>You have arrived to waypoint labelled as Level 2 Stairs E</endtext>
     </route>
@@ -342,10 +346,10 @@
       <firstname>Four steps sub-level stairway</firstname>
       <firsttext>Keep walking forward for about fifteen more steps... at the end of this corridor go past a main
         fire exit door towards room number two five zero</firsttext>
-      <firstconfirmation>Confirm the presence of the... four step sub-level stairway... </firstconfirmation> 
+      <firstconfirmation>Confirm the presence of the... four step sub-level stairway... when you get there... </firstconfirmation> 
       <secondname>Main Door</secondname>
       <secondtext>Keep walking forward for about... five more steps... room number two five zero is in front of you... </secondtext>
-      <secondconfirmation>Confirm the presence of the... Main fire exit door... </secondconfirmation>
+      <secondconfirmation>Confirm the presence of the... Main fire exit door... when you get there... </secondconfirmation>
       <endname>250</endname>
       <endtext>You have arrived to room number two five zero
                 which has its door in front of you</endtext>
@@ -361,11 +365,11 @@
       <firstname>Main Door</firstname>
       <firsttext>Keep walking forward for about fifteen more steps... until you reach the sub-level stairways
                 containing four steps which will be located to your... right...</firsttext>
-      <firstconfirmation>Confirm the presence of the... Main fire exit door... </firstconfirmation>          
+      <firstconfirmation>Confirm the presence of the... Main fire exit door... when you get there... </firstconfirmation>          
       <secondname>Four steps sub-level stairway</secondname>
       <secondtext>Keep walking forward for about... fifteen more steps... waypoint Level 2 Stairs E is at the end of this corridor,
                 straight ahead passed an emergency door which is normally closed...</secondtext>
-      <secondconfirmation>Confirm the presence of the... four step sub-level stairway... </secondconfirmation>
+      <secondconfirmation>Confirm the presence of the... four step sub-level stairway... when you get there... </secondconfirmation>
       <endname>Stairs E</endname>
       <endtext>You have arrived to waypoint labelled as Level 2 Stairs E</endtext>
     </route>
