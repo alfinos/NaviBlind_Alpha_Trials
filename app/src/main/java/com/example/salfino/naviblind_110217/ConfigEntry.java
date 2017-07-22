@@ -11,6 +11,10 @@ public class ConfigEntry {
     private String defaultcurrentdistance;
     private String defaultspeechrate;
     private String defaultpitch;
+    private String firstfixlatitude;
+    private String firstfixlongitude;
+    private String firstfixfloor;
+    private String firstfixaccuracy;
 
     public String getDefaultinterval() {
         return defaultinterval;
@@ -61,6 +65,38 @@ public class ConfigEntry {
         this.defaultpitch = defaultpitch;
     }
 
+    public String getFirstfixlatitude() {
+        return firstfixlatitude;
+    }
+
+    public void setFirstfixlatitude(String firstfixlatitude) {
+        this.firstfixlatitude = firstfixlatitude;
+    }
+
+    public String getFirstfixlongitude() {
+        return firstfixlongitude;
+    }
+
+    public void setFirstfixlongitude(String firstfixlongitude) {
+        this.firstfixlongitude = firstfixlongitude;
+    }
+
+    public String getFirstfixfloor() {
+        return firstfixfloor;
+    }
+
+    public void setFirstfixfloor(String firstfixfloor) {
+        this.firstfixfloor = firstfixfloor;
+    }
+
+    public String getFirstfixaccuracy() {
+        return firstfixaccuracy;
+    }
+
+    public void setFirstfixaccuracy(String firstfixaccuracy) {
+        this.firstfixaccuracy = firstfixaccuracy;
+    }
+
     @Override
     public String toString() {
         return "ConfigEntry{" +
@@ -70,6 +106,10 @@ public class ConfigEntry {
                 ", defaultcurrentdistance='" + defaultcurrentdistance + '\'' +
                 ", defaultspeechrate='" + defaultspeechrate + '\'' +
                 ", defaultpitch='" + defaultpitch + '\'' +
+                ", firstfixlatitude='" + firstfixlatitude + '\'' +
+                ", firstfixlongitude='" + firstfixlongitude + '\'' +
+                ", firstfixfloor='" + firstfixfloor + '\'' +
+                ", firstfixaccuracy='" + firstfixaccuracy + '\'' +
                 '}';
     }
 }
