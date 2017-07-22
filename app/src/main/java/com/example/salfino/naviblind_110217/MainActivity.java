@@ -93,6 +93,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean startTextFlag = false;
     private boolean firstTextFlag = false;
     private boolean secondTextFlag = false;
+    private boolean specialEvent = false;
+    private boolean firstConfirmFlag = false;
+    private boolean secondConfirmFlag = false;
 
     public boolean endFlag = false;
 
@@ -128,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
     public String serviceutterance = "";
     public String routeutterance = "";
     public String norouteutterance = "";
+    public String resumeutterance = "";
     public String mytempLocation = "";
     public int chosenRouteIndex = 0;
 
@@ -168,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
     public String initializeTTS(){
 
         String initString = "";
+        String eventsString = "";
 
         TextEntry myTextObject = textData.get(0);
         introutterance = myTextObject.getIntrotext();
@@ -180,8 +185,9 @@ public class MainActivity extends AppCompatActivity {
         serviceutterance = myTextObject.getServicetext();
         routeutterance = myTextObject.getRoutetext();
         norouteutterance = myTextObject.getNoroutetext();
+        resumeutterance = myTextObject.getResumetext();
 
-        //checkSpecialEvents();
+        eventsString = checkSpecialEvents();
 
         String id = "85b435a5-971f-47c3-8d33-23831680cca0";
         for (int i = 0; i < roomData.size();i++){
@@ -189,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
             String currentplanid = myObject.getFloorplanid();
             if (currentplanid.equals(id)){
                 String floorutterance = myObject.getFloordescription();
-                initString = introutterance + floorutterance + "... " + repatutterance;
+                initString = introutterance + floorutterance + "... " + "... " + eventsString + repatutterance;
                 break;
             }
         }
@@ -198,8 +204,28 @@ public class MainActivity extends AppCompatActivity {
 
     public String checkSpecialEvents(){
         String eventString = "";
+        String allDescription = "";
+        boolean noEventsFlag = false;
 
-        return  eventString;
+        for (int i = 0; i < eventData.size();i++){
+            EventEntry myObject = eventData.get(i);
+            String currentName = myObject.getName();
+            if (currentName.equals("None")){
+                noEventsFlag = true;
+                break;
+            }else {
+                String currentDescription = myObject.getEventdescription();
+                allDescription = allDescription + currentDescription + "... " ;
+            }
+        }
+
+        if(noEventsFlag){
+            eventString = "There are no special events on this floor today... ";
+        }else {
+            eventString = "There are the following events on the floor today... " + allDescription;
+        }
+
+        return eventString;
     }
 
     public void menu(String currentLocation){
@@ -209,7 +235,8 @@ public class MainActivity extends AppCompatActivity {
             RoomWayPointEntry myObject = roomwaypointData.get(i);
             String currentName = myObject.getName();
             String currentDescription = myObject.getDescription();
-            String fullDescription = currentName + " which is " + currentDescription;
+            //String fullDescription = currentName + " which is " + currentDescription;
+            String fullDescription = currentName;
             allLocations = fullDescription + "... " + allLocations;
         }
         texttospeech(menuutterance + "... " + roomutterance +"... " + waypointutterance+"... " + allLocations,"Menu",currentLocation);
@@ -252,10 +279,22 @@ public class MainActivity extends AppCompatActivity {
         texttospeech(startText,"OnStartText",currentLocation);
     }
 
+    public void firstConfirm (String currentLocation){
+        RouteEntry myObject = routeData.get(chosenRouteIndex);
+        String firstConfirmText = myObject.getFirstconfirmation();
+        texttospeech(firstConfirmText + "... " + resumeutterance,"OnFirstConfirm",currentLocation);
+    }
+
     public void launchFirstText(String currentLocation){
         RouteEntry myObject = routeData.get(chosenRouteIndex);
         String firstText = myObject.getFirstwaypointtext();
         texttospeech(firstText,"OnFirstText",currentLocation);
+    }
+
+    public void secondConfirm(String currentLocation){
+        RouteEntry myObject = routeData.get(chosenRouteIndex);
+        String secondConfirmText = myObject.getSecondconfirmation();
+        texttospeech(secondConfirmText + "... " + resumeutterance,"OnSecondConfirm",currentLocation);
     }
 
     public void launchSecondText(String currentLocation){
@@ -266,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void launchEndText(String currentLocation){
         RouteEntry myObject = routeData.get(chosenRouteIndex);
-        String endText = myObject.getEndpointtext();
+        String endText = myObject.getEndpointtext() + "... " + resumeutterance;
         texttospeech(endText,"OnEndRoute",currentLocation);
     }
 
@@ -405,7 +444,7 @@ public class MainActivity extends AppCompatActivity {
                            startVoiceRecognitionActivity();
                            break;
                        case "Repeat":
-                           startOfRoute = true;//?? CHECK!!
+                           startOfRoute = true;
                            duringRoute = false;
                            firstTextFlag = false;
                            secondTextFlag = false;
@@ -421,8 +460,11 @@ public class MainActivity extends AppCompatActivity {
                            startTextFlag = true;
                            firstTextFlag = false;
                            secondTextFlag = false;
-                           mIALocationManager.registerRegionListener(mRegionListener);
-                           mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                           mIALocationManager.removeLocationUpdates(mIALocationListener);
+                           mIALocationManager.unregisterRegionListener(mRegionListener);
+                           firstConfirm(currentLocationName);
+                           //mIALocationManager.registerRegionListener(mRegionListener);
+                           //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnFirstText":
                            startOfRoute = false;
@@ -430,8 +472,11 @@ public class MainActivity extends AppCompatActivity {
                            startTextFlag = false;
                            firstTextFlag = true;
                            secondTextFlag = false;
-                           mIALocationManager.registerRegionListener(mRegionListener);
-                           mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                           mIALocationManager.removeLocationUpdates(mIALocationListener);
+                           mIALocationManager.unregisterRegionListener(mRegionListener);
+                           secondConfirm(currentLocationName);
+                           //mIALocationManager.registerRegionListener(mRegionListener);
+                           //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnSecondText":
                            startOfRoute = false;
@@ -450,10 +495,19 @@ public class MainActivity extends AppCompatActivity {
                            mIALocationManager.removeLocationUpdates(mIALocationListener);
                            mIALocationManager.unregisterRegionListener(mRegionListener);
                            endFlag = true;
+                           playSound(2);
                            break;
                        case "OnNoRouteConfigured":
                            startOfRoute = false;
                            menu(currentLocationName);
+                           break;
+                       case "OnFirstConfirm":
+                           firstConfirmFlag = true;
+                           secondConfirmFlag = false;
+                           break;
+                       case "OnSecondConfirm":
+                           secondConfirmFlag = true;
+                           firstConfirmFlag = false;
                            break;
                    }
                }
@@ -656,7 +710,10 @@ public class MainActivity extends AppCompatActivity {
 //                            startTextFlag = true;
 //                            firstTextFlag = false;
 //                            secondTextFlag = false;
-//                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+//                            mIALocationManager.removeLocationUpdates(mIALocationListener);
+//                            mIALocationManager.unregisterRegionListener(mRegionListener);
+//                            firstConfirm(currentLocationName);
+//                           ?? mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
                 }else if (utteranceId.equals("OnFirstText")){
@@ -670,7 +727,10 @@ public class MainActivity extends AppCompatActivity {
 //                            startTextFlag = false;
 //                            firstTextFlag = true;
 //                            secondTextFlag = false;
-//                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+//                            mIALocationManager.removeLocationUpdates(mIALocationListener);
+//                            mIALocationManager.unregisterRegionListener(mRegionListener);
+//                            secondConfirm(currentLocationName);
+//                           ?? mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
                 }else if (utteranceId.equals("OnSecondText")){
@@ -709,6 +769,31 @@ public class MainActivity extends AppCompatActivity {
                             mediaPlayer(file,utteranceId,currentLocationName);
                             //startOfRoute = false;
                             // menu(currentLocationName);
+                        }
+                    });
+                }
+
+                else if (utteranceId.equals("OnFirstConfirm")){
+
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mediaPlayer(file,utteranceId,currentLocationName);
+                            //firstConfirmFlag = true;
+                            //secondConfirmFlag = false;
+                        }
+                    });
+                }
+
+                else if (utteranceId.equals("OnSecondConfirm")){
+
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mediaPlayer(file,utteranceId,currentLocationName);
+                            //secondConfirmFlag = true;
+                            //firstConfirmFlag = false;
+
                         }
                     });
                 }
@@ -769,12 +854,12 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public boolean onDoubleTap(MotionEvent e) {//Double tap in middle of device screen
-            if(!endFlag){//If during the route - enable seek from the start of the audio
+            if(!endFlag & !firstConfirmFlag & !secondConfirmFlag){//If during the route - enable seek from the start of the audio
                 if(mPlayer != null && mPlayer.isPlaying()){
                     mPlayer.seekTo(0);
                 }
-            }else{//Else if end of route - re-initialize the state machine for subsequent route selections
-
+            }else if (endFlag & !firstConfirmFlag & !secondConfirmFlag){//Else if end of route - re-initialize the state machine for subsequent route selections
+                playSound(0);//Play intro sound
                 new CountDownTimer(2000, 1000){// 2 seconds count down timer
                     @Override
                     public void onTick(long millisUntilFinished) {
@@ -789,6 +874,16 @@ public class MainActivity extends AppCompatActivity {
                         texttospeech(initString,"OnInitialization","");//Launch "OnInitialization" state
                     }
                 }.start();
+
+            }else if (!endFlag & firstConfirmFlag & !secondConfirmFlag){
+                firstConfirmFlag = false;
+                mIALocationManager.registerRegionListener(mRegionListener);
+                mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+
+            }else if (!endFlag & !firstConfirmFlag & secondConfirmFlag){
+                secondConfirmFlag = false;
+                mIALocationManager.registerRegionListener(mRegionListener);
+                mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
 
             }
             return super.onDoubleTap(e);
@@ -842,7 +937,7 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(TAG, "onCreate: starting Asynctask");
         DownloadXML downloadData = new DownloadXML();//Creating an instance of class DownloadXML which extends AsynchTask
-        downloadData.execute("http://naviblind.000webhostapp.com/configuration.xml");//Calling execute method with specified XML Url
+        downloadData.execute("http://naviblind.000webhostapp.com/configuration_final.xml");//Calling execute method with specified XML Url
         Log.d(TAG, "onCreate: done");
 
         params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"");//Initialize text to speech engine Bundle of params
@@ -1256,8 +1351,8 @@ public class MainActivity extends AppCompatActivity {
                 //startLeScan(true);
             }else if (match){
                 duringRoute = false;
-                Toast.makeText(MainActivity.this, "START::"+mytempLocation, Toast.LENGTH_SHORT).show();
-                Toast.makeText(MainActivity.this, "END::"+myInput, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this, "START::"+mytempLocation, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this, "END::"+myInput, Toast.LENGTH_SHORT).show();
                 chooseRoute(mytempLocation,myInput);//Pass myInput which is end location and mytempLocation which is current location and hence start as parameters
             }
 
@@ -1326,30 +1421,39 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             Log.d(TAG, "onPostExecute: parameter is " + s);
-            xmlFile = s;//XML file in string format
-            ParseIndoorAtlas parseIndoorAtlas = new ParseIndoorAtlas();//Create a new instance of ParseIndoorAtlas
 
-            //Parse for each datatype amd store in respective ArrayList:
-            parseIndoorAtlas.parseText(xmlFile);
-            textData = parseIndoorAtlas.getTextData();
+            if (s != null)
+            {
+                xmlFile = s;//XML file in string format
+            }
 
-            parseIndoorAtlas.parseConfiguration(xmlFile);
-            configData = parseIndoorAtlas.getConfigurationData();
+            else {
+                xmlFile = rawXML();
+            }
+                ParseIndoorAtlas parseIndoorAtlas = new ParseIndoorAtlas();//Create a new instance of ParseIndoorAtlas
 
-            parseIndoorAtlas.parseRoomWayPoint(xmlFile);
-            roomwaypointData = parseIndoorAtlas.getRoomWayPointData();//Retreive both room and waypoint data
+                //Parse for each datatype amd store in respective ArrayList:
+                parseIndoorAtlas.parseText(xmlFile);
+                textData = parseIndoorAtlas.getTextData();
 
-            parseIndoorAtlas.parseRoom(xmlFile); //downloaded XML file
-            roomData = parseIndoorAtlas.getRoomData();//Get room data only
+                parseIndoorAtlas.parseConfiguration(xmlFile);
+                configData = parseIndoorAtlas.getConfigurationData();
 
-            parseIndoorAtlas.parseRoute(xmlFile);
-            routeData = parseIndoorAtlas.getRouteData();//Get route data
+                parseIndoorAtlas.parseRoomWayPoint(xmlFile);
+                roomwaypointData = parseIndoorAtlas.getRoomWayPointData();//Retreive both room and waypoint data
 
-            parseIndoorAtlas.parseWayPoint(xmlFile);
-            waypointData = parseIndoorAtlas.getWayPointData();//Get waypoint data only
+                parseIndoorAtlas.parseRoom(xmlFile); //downloaded XML file
+                roomData = parseIndoorAtlas.getRoomData();//Get room data only
 
-            parseIndoorAtlas.parseEvent(xmlFile);
-            eventData = parseIndoorAtlas.getEventData();//Get events data if any available
+                parseIndoorAtlas.parseRoute(xmlFile);
+                routeData = parseIndoorAtlas.getRouteData();//Get route data
+
+                parseIndoorAtlas.parseWayPoint(xmlFile);
+                waypointData = parseIndoorAtlas.getWayPointData();//Get waypoint data only
+
+                parseIndoorAtlas.parseEvent(xmlFile);
+                eventData = parseIndoorAtlas.getEventData();//Get events data if any available
+
         }
 
         @Override
@@ -1362,10 +1466,47 @@ public class MainActivity extends AppCompatActivity {
             }
             if (indoorAtlasFeed == null) {
                 Log.e(TAG, "doInBackground: Error downloading XML data");
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this,"Error downloading XML data. Using default configuration" , Toast.LENGTH_SHORT).show();
+                    }
+                });
+
             }
             return indoorAtlasFeed;
         }
 
+        private String rawXML (){
+
+            StringBuilder xmlResult = new StringBuilder();
+            try {
+                InputStream inputStream = getResources().openRawResource(R.raw.configuration_final);
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                BufferedReader reader = new BufferedReader(inputStreamReader);
+
+                int charsRead;
+                char[] inputBuffer = new char[500];//Read 500 characters at a time
+                while(true){
+                    charsRead = reader.read(inputBuffer);
+                    if(charsRead < 0){//End of stream of data
+                        break;
+                    }
+                    if(charsRead > 0){//Keep count of number of characters read from stream
+                        xmlResult.append(String.copyValueOf(inputBuffer,0,charsRead));//Append until there is no more data to read
+                    }
+                }
+
+                reader.close();//All IO object will be closed
+                return xmlResult.toString();
+
+            } catch (IOException e) {
+                // Error handling
+                Log.e(TAG, "getXML from RAW: Error Detected! " + e.getMessage());
+            }
+            return null;
+
+        }
         private String downloadXML (String urlPath){
             StringBuilder xmlResult = new StringBuilder();
 
@@ -1395,15 +1536,15 @@ public class MainActivity extends AppCompatActivity {
 
             } catch (MalformedURLException e) {
                 Log.e(TAG, "downloadXML: Invalid URL " + e.getMessage());
-                Toast.makeText(MainActivity.this,"downloadXML: Invalid URL. Please fix configuration file and relaunch Naviblind" , Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this,"downloadXML: Invalid URL. Please fix configuration file and relaunch Naviblind" , Toast.LENGTH_SHORT).show();
 
             } catch (IOException e){
                 Log.e(TAG, "downloadXML: IO Exception reading data: " + e.getMessage());
-                Toast.makeText(MainActivity.this,"downloadXML: IO Exception reading data. Please fix configuration file and relaunch Naviblind" , Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this,"downloadXML: IO Exception reading data. Please fix configuration file and relaunch Naviblind" , Toast.LENGTH_SHORT).show();
 
             } catch (SecurityException e){
                 Log.e(TAG, "downloadXML: Security Exception. Needs Permission! " + e.getMessage());
-                Toast.makeText(MainActivity.this,"downloadXML: Security Exception. Needs Permission. Please fix configuration file and relaunch Naviblind" , Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this,"downloadXML: Security Exception. Needs Permission. Please fix configuration file and relaunch Naviblind" , Toast.LENGTH_SHORT).show();
                 //e.printStackTrace();
             }
 
