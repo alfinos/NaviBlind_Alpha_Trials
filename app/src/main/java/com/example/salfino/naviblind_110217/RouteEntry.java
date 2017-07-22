@@ -17,6 +17,8 @@ public class RouteEntry {
     private String secondwaypointtext;
     private String endpointname;
     private String endpointtext;
+    private String firstconfirmation;
+    private String secondconfirmation;
 
     public String getLevelNo() {
         return levelNo;
@@ -106,6 +108,22 @@ public class RouteEntry {
         this.endpointtext = endpointtext;
     }
 
+    public String getFirstconfirmation() {
+        return firstconfirmation;
+    }
+
+    public void setFirstconfirmation(String firstconfirmation) {
+        this.firstconfirmation = firstconfirmation;
+    }
+
+    public String getSecondconfirmation() {
+        return secondconfirmation;
+    }
+
+    public void setSecondconfirmation(String secondconfirmation) {
+        this.secondconfirmation = secondconfirmation;
+    }
+
     @Override
     public String toString() {
         return "RouteEntry{" +
@@ -120,6 +138,8 @@ public class RouteEntry {
                 ", secondwaypointtext='" + secondwaypointtext + '\'' +
                 ", endpointname='" + endpointname + '\'' +
                 ", endpointtext='" + endpointtext + '\'' +
+                ", firstconfirmation='" + firstconfirmation + '\'' +
+                ", secondconfirmation='" + secondconfirmation + '\'' +
                 '}';
     }
 }
