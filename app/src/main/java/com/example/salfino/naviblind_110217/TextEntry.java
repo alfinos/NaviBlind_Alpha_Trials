@@ -18,6 +18,7 @@ public class TextEntry {
     private String noeventstext;
     private String routetext;
     private String noroutetext;
+    private String resumetext;
 
 
     public String getIntrotext() {
@@ -116,6 +117,14 @@ public class TextEntry {
         this.noroutetext = noroutetext;
     }
 
+    public String getResumetext() {
+        return resumetext;
+    }
+
+    public void setResumetext(String resumetext) {
+        this.resumetext = resumetext;
+    }
+
     @Override
     public String toString() {
         return "TextEntry{" +
@@ -131,6 +140,7 @@ public class TextEntry {
                 ", noeventstext='" + noeventstext + '\'' +
                 ", routetext='" + routetext + '\'' +
                 ", noroutetext='" + noroutetext + '\'' +
+                ", resumetext='" + resumetext + '\'' +
                 '}';
     }
 }
