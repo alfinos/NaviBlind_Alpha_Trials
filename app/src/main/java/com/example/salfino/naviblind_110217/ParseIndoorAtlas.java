@@ -384,7 +384,7 @@ public class ParseIndoorAtlas {
                                 currentRecord.setStartpointname(textValue);
                             } else if ("starttext".equalsIgnoreCase(tagName)) {
                                 currentRecord.setStartpointtext(textValue);
-                            }else if ("firstname".equalsIgnoreCase(tagName)){
+                            } else if ("firstname".equalsIgnoreCase(tagName)){
                                     currentRecord.setFirstwaypointname(textValue);
                             } else if ("firsttext".equalsIgnoreCase(tagName)){
                                     currentRecord.setFirstwaypointtext(textValue);
@@ -392,10 +392,14 @@ public class ParseIndoorAtlas {
                                 currentRecord.setSecondwaypointname(textValue);
                             } else if ("secondtext".equalsIgnoreCase(tagName)) {
                                 currentRecord.setSecondwaypointtext(textValue);
-                            }else if ("endname".equalsIgnoreCase(tagName)) {
+                            } else if ("endname".equalsIgnoreCase(tagName)) {
                                     currentRecord.setEndpointname(textValue);
-                            } else if ("endtext".equalsIgnoreCase(tagName)){
-                                    currentRecord.setEndpointtext(textValue);
+                            } else if ("endtext".equalsIgnoreCase(tagName)) {
+                                currentRecord.setEndpointtext(textValue);
+                            } else if ("firstconfirmation".equalsIgnoreCase(tagName)) {
+                                currentRecord.setFirstconfirmation(textValue);
+                            } else if ("secondconfirmation".equalsIgnoreCase(tagName)){
+                                    currentRecord.setSecondconfirmation(textValue);
                             }
                         }
                         break;
@@ -472,8 +476,10 @@ public class ParseIndoorAtlas {
                                 currentRecord.setNoeventstext(textValue);
                             } else if ("routetext".equalsIgnoreCase(tagName)) {
                                 currentRecord.setRoutetext(textValue);
-                            } else if ("noroutetext".equalsIgnoreCase(tagName)){
-                                    currentRecord.setNoroutetext(textValue);
+                            } else if ("noroutetext".equalsIgnoreCase(tagName)) {
+                                currentRecord.setNoroutetext(textValue);
+                            }else if ("resumetext".equalsIgnoreCase(tagName)){
+                                    currentRecord.setResumetext(textValue);
                             }
                         }
                         break;
