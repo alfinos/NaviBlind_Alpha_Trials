@@ -470,8 +470,10 @@ public class ParseIndoorAtlas {
                                 currentRecord.setEventsintrotext(textValue);
                             }else if ("noeventstext".equalsIgnoreCase(tagName)) {
                                 currentRecord.setNoeventstext(textValue);
-                            } else if ("routetext".equalsIgnoreCase(tagName)){
-                                    currentRecord.setRoutetext(textValue);
+                            } else if ("routetext".equalsIgnoreCase(tagName)) {
+                                currentRecord.setRoutetext(textValue);
+                            } else if ("noroutetext".equalsIgnoreCase(tagName)){
+                                    currentRecord.setNoroutetext(textValue);
                             }
                         }
                         break;
