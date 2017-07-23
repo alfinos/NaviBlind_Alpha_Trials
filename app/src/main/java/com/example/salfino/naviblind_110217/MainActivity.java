@@ -210,6 +210,14 @@ public class MainActivity extends AppCompatActivity {
         return initString;
     }
 
+    public void fixLocation(){
+
+        IALocation location = new IALocation.Builder().withLatitude(DEFAULT_FF_LATITUDE)
+                        .withLongitude(DEFAULT_FF_LONGITUDE)
+                        .withAccuracy(DEFAULT_FF_ACCURACY)
+                        .withFloorLevel(DEFAULT_FF_FLOOR).build();
+                mIALocationManager.setLocation(location);//Explicitly set the the initial fix as specified in configuration file
+    }
     public String checkSpecialEvents(String id){
         String eventString = "";
         String allDescription = "";
@@ -446,6 +454,7 @@ public class MainActivity extends AppCompatActivity {
 
                    switch (utteranceID) {
                        case "OnInitialization":
+                           //fixLocation();//Fix location before getting location updates
                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnLocationChanged":
@@ -964,7 +973,7 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(TAG, "onCreate: starting Asynctask");
         DownloadXML downloadData = new DownloadXML();//Creating an instance of class DownloadXML which extends AsynchTask
-        downloadData.execute("http://naviblind.000webhostapp.com/configuration_main.xml");//Calling execute method with specified XML Url
+        downloadData.execute("http://naviblind.000webhostapp.com/ia_config.xml");//Calling execute method with specified XML Url
         Log.d(TAG, "onCreate: done");
 
         params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"");//Initialize text to speech engine Bundle of params
@@ -973,12 +982,6 @@ public class MainActivity extends AppCompatActivity {
 
         //Create a new instance of IALocationManager using its create() method
         mIALocationManager = IALocationManager.create(this);
-       /* IALocation location = new IALocation.Builder().withLatitude(START_POSITION_LAT)
-                                                      .withLongitude(START_POSITION_LON)
-                                                      .withAccuracy(75f)
-                                                      .withFloorLevel(2).build();*/
-        //IALocation location = new IALocation.Builder().withAccuracy(75f).withFloorLevel(2).build();
-        //mIALocationManager.setLocation(location);//Explicitly set the the initial fix as specified above*/
 
         //Create edges with unique clockwise (lat, lon) points
 //        List edges = Arrays.asList(new double[][]{{51.52231720,-0.13089649},{51.52230740,-0.13089247},
@@ -1025,12 +1028,6 @@ public class MainActivity extends AppCompatActivity {
                 DEFAULT_FF_LONGITUDE = Double.parseDouble(myConfigObject.getFirstfixlongitude());
                 DEFAULT_FF_FLOOR = Integer.parseInt(myConfigObject.getFirstfixfloor());
                 DEFAULT_FF_ACCURACY = Float.parseFloat(myConfigObject.getFirstfixaccuracy());
-
-                /*IALocation location = new IALocation.Builder().withLatitude(DEFAULT_FF_LATITUDE)
-                        .withLongitude(DEFAULT_FF_LONGITUDE)
-                        .withAccuracy(DEFAULT_FF_ACCURACY)
-                        .withFloorLevel(DEFAULT_FF_FLOOR).build();
-                mIALocationManager.setLocation(location);//Explicitly set the the initial fix as specified in configuration file*/
 
                 IALocationRequest request = IALocationRequest.create();//Set High accuracy as priority and fastest interval and default displacement
                 request.setPriority(IALocationRequest.PRIORITY_HIGH_ACCURACY);//High-accuracy updates requested
@@ -1498,7 +1495,7 @@ public class MainActivity extends AppCompatActivity {
 
             StringBuilder xmlResult = new StringBuilder();
             try {
-                InputStream inputStream = getResources().openRawResource(R.raw.configuration_main);
+                InputStream inputStream = getResources().openRawResource(R.raw.ia_config);
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                 BufferedReader reader = new BufferedReader(inputStreamReader);
 
