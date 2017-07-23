@@ -55,6 +55,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static android.R.attr.id;
+
 public class MainActivity extends AppCompatActivity {
 
     private int[] audioCommands = {//Array of sounds
@@ -77,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
     public float DEFAULT_PITCH;
     public double DEFAULT_FF_LATITUDE;
     public double DEFAULT_FF_LONGITUDE;
+    public float DEFAULT_FLOOR_CERTAINTY;
     public int DEFAULT_FF_FLOOR;
     public float DEFAULT_FF_ACCURACY;
     public IALocationManager mIALocationManager;
@@ -137,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
     public String norouteutterance = "";
     public String resumeutterance = "";
     public String mytempLocation = "";
+    public String currentId = "";
     public int chosenRouteIndex = 0;
 
 
@@ -173,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         scanner = mBTAdapter.getBluetoothLeScanner();
     }
 
-    public String initializeTTS(){
+    public String initializeTTS(String id){
 
         String initString = "";
         String eventsString = "";
@@ -191,35 +195,38 @@ public class MainActivity extends AppCompatActivity {
         norouteutterance = myTextObject.getNoroutetext();
         resumeutterance = myTextObject.getResumetext();
 
-        eventsString = checkSpecialEvents();
+        eventsString = checkSpecialEvents(id);
 
-        String id = "85b435a5-971f-47c3-8d33-23831680cca0";
+        //String id = "85b435a5-971f-47c3-8d33-23831680cca0";
         for (int i = 0; i < roomData.size();i++){
             RoomEntry myObject = roomData.get(i);
             String currentplanid = myObject.getFloorplanid();
             if (currentplanid.equals(id)){
                 String floorutterance = myObject.getFloordescription();
-                initString = introutterance + floorutterance + "... " + "... " + eventsString + repatutterance;
+                initString = introutterance + floorutterance + "... " + "... " + eventsString + "... Please wait for location update... ";
                 break;
             }
         }
         return initString;
     }
 
-    public String checkSpecialEvents(){
+    public String checkSpecialEvents(String id){
         String eventString = "";
         String allDescription = "";
         boolean noEventsFlag = false;
 
         for (int i = 0; i < eventData.size();i++){
             EventEntry myObject = eventData.get(i);
-            String currentName = myObject.getName();
-            if (currentName.equals("None")){
-                noEventsFlag = true;
-                break;
-            }else {
-                String currentDescription = myObject.getEventdescription();
-                allDescription = allDescription + currentDescription + "... " ;
+            String currentplanid = myObject.getFloorplanid();
+            if (currentplanid.equals(id)){
+                String currentName = myObject.getName();
+                if (currentName.equals("None")){
+                    noEventsFlag = true;
+                    break;
+                }else {
+                    String currentDescription = myObject.getEventdescription();
+                    allDescription = allDescription + currentDescription + "... " ;
+                }
             }
         }
 
@@ -237,11 +244,14 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i = 0; i < roomwaypointData.size();i++){
             RoomWayPointEntry myObject = roomwaypointData.get(i);
-            String currentName = myObject.getName();
-            String currentDescription = myObject.getDescription();
-            //String fullDescription = currentName + " which is " + currentDescription;
-            String fullDescription = currentName;
-            allLocations = fullDescription + "... " + allLocations;
+            String currentFloorPlanId = myObject.getFloorplanid();
+            if (currentFloorPlanId.equals(currentId)){
+                String currentName = myObject.getName();
+                String currentDescription = myObject.getDescription();
+                //String fullDescription = currentName + " which is " + currentDescription;
+                String fullDescription = currentName;
+                allLocations = fullDescription + "... " + allLocations;
+            }
         }
         texttospeech(menuutterance + "... " + roomutterance +"... " + waypointutterance+"... " + allLocations,"Menu",currentLocation);
     }
@@ -311,6 +321,11 @@ public class MainActivity extends AppCompatActivity {
         RouteEntry myObject = routeData.get(chosenRouteIndex);
         String endText = myObject.getEndpointtext() + "... " + resumeutterance;
         texttospeech(endText,"OnEndRoute",currentLocation);
+    }
+
+    public void estimateTime (String currentLocation, double routeDuration) {
+        String timeText = "Your estimated route time was... " + routeDuration + "... seconds";
+        texttospeech(timeText,"OnTimeEstimate",currentLocation);
     }
 
     private void startLeScan(boolean enable) {
@@ -411,7 +426,6 @@ public class MainActivity extends AppCompatActivity {
    private void mediaPlayer (final File file, final String utteranceID, final String currentLocationName){
 
        try {
-
            Uri myuri = Uri.parse(file.getPath());
            mPlayer = MediaPlayer.create(this,myuri);
            AudioAttributes myAttributes = new AudioAttributes.Builder()
@@ -432,11 +446,9 @@ public class MainActivity extends AppCompatActivity {
 
                    switch (utteranceID) {
                        case "OnInitialization":
-                           mIALocationManager.registerRegionListener(mRegionListener);
                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnLocationChanged":
-                           mIALocationManager.registerRegionListener(mRegionListener);
                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnLocationChangedStart":
@@ -452,7 +464,6 @@ public class MainActivity extends AppCompatActivity {
                            duringRoute = false;
                            firstTextFlag = false;
                            secondTextFlag = false;
-                           mIALocationManager.registerRegionListener(mRegionListener);
                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnChoosingRoute":
@@ -466,10 +477,7 @@ public class MainActivity extends AppCompatActivity {
                            firstTextFlag = false;
                            secondTextFlag = false;
                            mIALocationManager.removeLocationUpdates(mIALocationListener);
-                           mIALocationManager.unregisterRegionListener(mRegionListener);
                            firstConfirm(currentLocationName);
-                           //mIALocationManager.registerRegionListener(mRegionListener);
-                           //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnFirstText":
                            startOfRoute = false;
@@ -478,10 +486,7 @@ public class MainActivity extends AppCompatActivity {
                            firstTextFlag = true;
                            secondTextFlag = false;
                            mIALocationManager.removeLocationUpdates(mIALocationListener);
-                           mIALocationManager.unregisterRegionListener(mRegionListener);
                            secondConfirm(currentLocationName);
-                           //mIALocationManager.registerRegionListener(mRegionListener);
-                           //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnSecondText":
                            startOfRoute = false;
@@ -489,7 +494,6 @@ public class MainActivity extends AppCompatActivity {
                            startTextFlag = false;
                            firstTextFlag = false;
                            secondTextFlag = true;
-                           mIALocationManager.registerRegionListener(mRegionListener);
                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                            break;
                        case "OnEndRoute":
@@ -505,6 +509,7 @@ public class MainActivity extends AppCompatActivity {
                                   ? (SystemClock.elapsedRealtime() - mRequestStartTime) / 1e3
                                    : 0d;
                            Toast.makeText(MainActivity.this, "Elapsed Time :" + duration, Toast.LENGTH_SHORT).show();
+                           estimateTime(currentLocationName,duration);
                            break;
                        case "OnNoRouteConfigured":
                            startOfRoute = false;
@@ -517,6 +522,9 @@ public class MainActivity extends AppCompatActivity {
                        case "OnSecondConfirm":
                            secondConfirmFlag = true;
                            firstConfirmFlag = false;
+                           break;
+                       case "OnTimeEstimate":
+                           //Do nothing
                            break;
                    }
                }
@@ -558,7 +566,7 @@ public class MainActivity extends AppCompatActivity {
                }
            });
        } catch (Exception e) {
-           Toast.makeText(MainActivity.this, "Check Wi-Fi connection or audio file missing!!", Toast.LENGTH_LONG).show();
+           Toast.makeText(MainActivity.this, "ERROR!!!", Toast.LENGTH_LONG).show();
        }
    }
     private void playSound (final int audioCommandIndex) {
@@ -618,7 +626,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         } catch (Exception e) {
-            Toast.makeText(MainActivity.this, "Check Wi-Fi connection or audio file missing!!", Toast.LENGTH_LONG).show();
+            Toast.makeText(MainActivity.this, "ERROR!!!", Toast.LENGTH_LONG).show();
         }
     }
     private void texttospeech(final String text, final String utteranceId,final String currentLocationName){
@@ -695,7 +703,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-                            //startOfRoute = true;//?? CHECK!!
+                            //startOfRoute = true;
                             //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
@@ -807,6 +815,17 @@ public class MainActivity extends AppCompatActivity {
                     });
                 }
 
+                else if (utteranceId.equals("OnTimeEstimate")){
+
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mediaPlayer(file,utteranceId,currentLocationName);
+                            //Do Nothing
+                        }
+                    });
+                }
+
             }
 
             @Override
@@ -879,19 +898,18 @@ public class MainActivity extends AppCompatActivity {
                         startOfRoute = true;//Reset state flags
                         endFlag = false;
                         mIALocationManager.registerRegionListener(mRegionListener);//Listen for location first
-                        String initString = initializeTTS();//Initialize text to speech
-                        texttospeech(initString,"OnInitialization","");//Launch "OnInitialization" state
+                        mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                        //String initString = initializeTTS(id);//Initialize text to speech
+                        //texttospeech(initString,"OnInitialization","");//Launch "OnInitialization" state
                     }
                 }.start();
 
             }else if (!endFlag & firstConfirmFlag & !secondConfirmFlag){
                 firstConfirmFlag = false;
-                mIALocationManager.registerRegionListener(mRegionListener);
                 mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
 
             }else if (!endFlag & !firstConfirmFlag & secondConfirmFlag){
                 secondConfirmFlag = false;
-                mIALocationManager.registerRegionListener(mRegionListener);
                 mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
 
             }
@@ -946,7 +964,7 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(TAG, "onCreate: starting Asynctask");
         DownloadXML downloadData = new DownloadXML();//Creating an instance of class DownloadXML which extends AsynchTask
-        downloadData.execute("http://naviblind.000webhostapp.com/configuration_final.xml");//Calling execute method with specified XML Url
+        downloadData.execute("http://naviblind.000webhostapp.com/configuration_main.xml");//Calling execute method with specified XML Url
         Log.d(TAG, "onCreate: done");
 
         params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"");//Initialize text to speech engine Bundle of params
@@ -1000,6 +1018,7 @@ public class MainActivity extends AppCompatActivity {
                 DEFAULT_INTERVAL = Long.parseLong(myConfigObject.getDefaultinterval());
                 DEFAULT_CURRENT_DISTANCE = Double.parseDouble(myConfigObject.getDefaultcurrentdistance());
                 DEFAULT_ACCURACY = Double.parseDouble(myConfigObject.getDefaultaccuracy());
+                DEFAULT_FLOOR_CERTAINTY = Float.parseFloat(myConfigObject.getDefaultfloorcertainty());
                 DEFAULT_SPEECH_RATE = Float.parseFloat(myConfigObject.getDefaultspeechrate());
                 DEFAULT_PITCH = Float.parseFloat(myConfigObject.getDefaultpitch());
                 DEFAULT_FF_LATITUDE = Double.parseDouble(myConfigObject.getFirstfixlatitude());
@@ -1018,8 +1037,9 @@ public class MainActivity extends AppCompatActivity {
                 request.setFastestInterval(DEFAULT_INTERVAL);//Explicitly set the fastest interval for location updates in milliseconds
                 request.setSmallestDisplacement(DEFAULT_DISPLACEMENT);//Set the minimum displacement between location updates in meters
                 mIALocationManager.registerRegionListener(mRegionListener);//Start listening for change in region
-                String initString = initializeTTS();//Initialize TTS parameters and get current floor plan details
-                texttospeech(initString,"OnInitialization","");//Launch "On Initialization" state
+                mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                //String initString = initializeTTS();//Initialize TTS parameters and get current floor plan details
+                //texttospeech(initString,"OnInitialization","");//Launch "On Initialization" state
             }
         }.start();
     }
@@ -1060,26 +1080,34 @@ public class MainActivity extends AppCompatActivity {
       public void onLocationChanged(IALocation iaLocation) {
 
           String currentLocationName = "";//Debug data to monitor location and accuracy
-          mTextView.setText(String.format(Locale.UK, "Latitude: %.8f,\nLongitude: %.8f,\nAccuracy: %.8f,\nCertainty: %.8f,\nLevel: %d",
+          mTextView.setText(String.format(Locale.UK, "Latitude: %.8f,\nLongitude: %.8f,\nAccuracy: %.8f,\nCertainty: %.8f,\nLevel: %d, \nAltitude: %.8f.",
                   iaLocation.getLatitude(), iaLocation.getLongitude(),iaLocation.getAccuracy(),iaLocation.getFloorCertainty(),
-                  iaLocation.getFloorLevel()));
+                  iaLocation.getFloorLevel(),iaLocation.getAltitude()));
           mTextView.setTextSize(15);
 
           if (iaLocation.getAccuracy() <= DEFAULT_ACCURACY) { //iaLocation.getFloorLevel() == 2 && iaLocation.getAccuracy()<=5
               String locationString = "No Location";//Resume only if accuracy is adequate, initialize to No location
               for (int i = 0; i < roomwaypointData.size();i++){//Loop through all the floor locations and check how far from those locations the user is
                   RoomWayPointEntry myObject = roomwaypointData.get(i);
-                  double comparelatitude = Double.parseDouble(myObject.getLatitude());
-                  double comparelongitude = Double.parseDouble(myObject.getLongitude());
-                  Haversine haversineObject = new Haversine(); //Create the Haversine object
-                  currentDistance = 1000*(haversineObject.distance(iaLocation.getLatitude(),iaLocation.getLongitude(),comparelatitude,comparelongitude));
+                  String currentFloodPlanId = myObject.getFloorplanid().trim();
+                  //Toast.makeText(MainActivity.this, "::" + currentFloodPlanId + ":::" + currentId, Toast.LENGTH_LONG).show();
+                  if (currentFloodPlanId.equalsIgnoreCase(currentId)){
+                    double comparelatitude = Double.parseDouble(myObject.getLatitude());
+                    double comparelongitude = Double.parseDouble(myObject.getLongitude());
+                    Haversine haversineObject = new Haversine(); //Create the Haversine object
+                    currentDistance = 1000*(haversineObject.distance(iaLocation.getLatitude(),iaLocation.getLongitude(),comparelatitude,comparelongitude));
 
-                  if (currentDistance <= DEFAULT_CURRENT_DISTANCE){//If accuracy of a decent level, get location details
-                      String textutternace = myObject.getText();
-                      String descriptionutternace = myObject.getDescription();
-                      currentLocationName = myObject.getName();//Always monitor current location name
-                      locationString = textutternace + "... " + descriptionutternace;
-                      break;//Break as soon as a location is found nearby
+                    if (currentDistance <= DEFAULT_CURRENT_DISTANCE){//If accuracy of a decent level, get location details
+                        int currentLevelNumber = Integer.parseInt(myObject.getLevelnumber());
+                        int estimatedLevelNumber = iaLocation.getFloorLevel();
+                        if (currentLevelNumber == estimatedLevelNumber & iaLocation.getFloorCertainty() >= DEFAULT_FLOOR_CERTAINTY) {
+                            String textutternace = myObject.getText();
+                            String descriptionutternace = myObject.getDescription();
+                            currentLocationName = myObject.getName();//Always monitor current location name
+                            locationString = textutternace + "... " + descriptionutternace;
+                            break;//Break as soon as a location is found nearby
+                        }
+                    }
                   }
               }
 
@@ -1105,7 +1133,6 @@ public class MainActivity extends AppCompatActivity {
               }
           } else {
               playSound(1);//Play tick sound while waiting for adequate accuracy
-              //texttospeech(serviceutterance,"OnNoService");
           }
       }
 
@@ -1159,22 +1186,13 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onEnterRegion(IARegion iaRegion) {
             if (iaRegion.getType() == IARegion.TYPE_FLOOR_PLAN) {
-                String id = iaRegion.getId();
+                currentId = iaRegion.getId();
+                Toast.makeText(MainActivity.this, "REGION :" + currentId, Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "floorPlan changed to " + id);
-                for (int i = 0; i < roomData.size();i++){
-                    RoomEntry myObject = roomData.get(i);
-                    String currentplanid = myObject.getFloorplanid();
-                    if (currentplanid.equals(id)){
-                        String floorutterance = myObject.getFloordescription();
-                        mTextView.setText("FLOOR MATCH:: " + floorutterance);
-                        mTextView.setTextSize(15);
-                        break;
-                    }
-                }
-
-                IALocation location = new IALocation.Builder()
-                        .withFloorLevel(DEFAULT_FF_FLOOR).build();
-                mIALocationManager.setLocation(location);//Explicitly set floor level to default
+                mIALocationManager.removeLocationUpdates(mIALocationListener);
+                mIALocationManager.unregisterRegionListener(mRegionListener);
+                String initString = initializeTTS(currentId);//Initialize TTS parameters and get current floor plan details
+                texttospeech(initString,"OnInitialization","");//Launch "On Initialization" state
             }
         }
 
@@ -1184,20 +1202,6 @@ public class MainActivity extends AppCompatActivity {
             if (iaRegion.getType() == IARegion.TYPE_FLOOR_PLAN) {
                 String id = iaRegion.getId();
                 Log.d(TAG, "floorPlan changed to " + id);
-                for (int i = 0; i < roomData.size();i++){
-                    RoomEntry myObject = roomData.get(i);
-                    String currentplanid = myObject.getFloorplanid();
-                    if (currentplanid.equals(id)){
-                        String floorutterance = myObject.getFloordescription();
-                        mTextView.setText("FLOOR MATCH:: " + floorutterance);
-                        mTextView.setTextSize(15);
-                        break;
-                    }
-                }
-
-                IALocation location = new IALocation.Builder()
-                        .withFloorLevel(DEFAULT_FF_FLOOR).build();
-                mIALocationManager.setLocation(location);//Explicitly set floor level to default
             }
         }
     };
@@ -1227,7 +1231,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         super.onPause();
-        //Toast.makeText(MainActivity.this, "DEBUG::onPause() callback...", Toast.LENGTH_LONG).show();
         mIALocationManager.removeLocationUpdates(mIALocationListener);
         mIALocationManager.removeGeofenceUpdates(mIAGeofenceListener);
         mIALocationManager.unregisterRegionListener(mRegionListener);
@@ -1366,14 +1369,13 @@ public class MainActivity extends AppCompatActivity {
                 //startLeScan(true);
             }else if (match){
                 duringRoute = false;
-                //Toast.makeText(MainActivity.this, "START::"+mytempLocation, Toast.LENGTH_SHORT).show();
-                //Toast.makeText(MainActivity.this, "END::"+myInput, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "START::"+mytempLocation, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "END::"+myInput, Toast.LENGTH_SHORT).show();
                 chooseRoute(mytempLocation,myInput);//Pass myInput which is end location and mytempLocation which is current location and hence start as parameters
             }
 
             else{
                 texttospeech(repatutterance,"Repeat","");
-                Toast.makeText(MainActivity.this, "REPEAT!!!", Toast.LENGTH_SHORT).show();
             }
 
         }
@@ -1496,7 +1498,7 @@ public class MainActivity extends AppCompatActivity {
 
             StringBuilder xmlResult = new StringBuilder();
             try {
-                InputStream inputStream = getResources().openRawResource(R.raw.configuration_final);
+                InputStream inputStream = getResources().openRawResource(R.raw.configuration_main);
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                 BufferedReader reader = new BufferedReader(inputStreamReader);
 
