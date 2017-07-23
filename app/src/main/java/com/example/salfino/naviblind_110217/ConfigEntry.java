@@ -8,6 +8,7 @@ public class ConfigEntry {
     private String defaultinterval;
     private String defaultdisplacement;
     private String defaultaccuracy;
+    private String defaultfloorcertainty;
     private String defaultcurrentdistance;
     private String defaultspeechrate;
     private String defaultpitch;
@@ -97,12 +98,21 @@ public class ConfigEntry {
         this.firstfixaccuracy = firstfixaccuracy;
     }
 
+    public String getDefaultfloorcertainty() {
+        return defaultfloorcertainty;
+    }
+
+    public void setDefaultfloorcertainty(String defaultfloorcertainty) {
+        this.defaultfloorcertainty = defaultfloorcertainty;
+    }
+
     @Override
     public String toString() {
         return "ConfigEntry{" +
                 "defaultinterval='" + defaultinterval + '\'' +
                 ", defaultdisplacement='" + defaultdisplacement + '\'' +
                 ", defaultaccuracy='" + defaultaccuracy + '\'' +
+                ", defaultfloorcertainty='" + defaultfloorcertainty + '\'' +
                 ", defaultcurrentdistance='" + defaultcurrentdistance + '\'' +
                 ", defaultspeechrate='" + defaultspeechrate + '\'' +
                 ", defaultpitch='" + defaultpitch + '\'' +
