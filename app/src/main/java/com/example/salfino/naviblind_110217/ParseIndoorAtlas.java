@@ -540,6 +540,8 @@ public class ParseIndoorAtlas {
                                 currentRecord.setDefaultdisplacement(textValue);
                             } else if ("defaultaccuracy".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
                                 currentRecord.setDefaultaccuracy(textValue);
+                            } else if ("defaultfloorcertainty".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                    currentRecord.setDefaultfloorcertainty(textValue);
                             } else if ("defaultcurrentdistance".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
                                 currentRecord.setDefaultcurrentdistance(textValue);
                             } else if ("defaultspeechrate".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
