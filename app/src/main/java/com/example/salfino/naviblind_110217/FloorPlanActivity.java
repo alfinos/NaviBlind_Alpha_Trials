@@ -40,16 +40,6 @@ public class FloorPlanActivity extends AppCompatActivity {
 
     private static final String TAG = "IndoorAtlas";
     //Waypoint geo-coordinates in decimal degrees (DD)
-    private static final double GR_OFFICE_LAT = 51.52222145;
-    private static final double GR_OFFICE_LON = -0.13049584;
-    private static final double START_POSITION_LAT = 51.52231720;
-    private static final double START_POSITION_LON = -0.13089649;
-    private static final double FOUR_STEPS_LAT = 51.52221143;
-    private static final double FOUR_STEPS_LON = -0.13077848;
-    private static final double TWO_STEPS_LAT = 51.52228758;
-    private static final double TWO_STEPS_LON = -0.13059912;
-    private static final double MAIN_DOOR_LAT = 51.52213759;
-    private static final double MAIN_DOOR_LON = -0.13069935;
     private long DEFAULT_INTERVAL = 100L;//milliseconds
     private float DEFAULT_DISPLACEMENT = 0.2f;//meters
 
@@ -88,11 +78,11 @@ public class FloorPlanActivity extends AppCompatActivity {
             if (iaRegion.getType() == IARegion.TYPE_FLOOR_PLAN) {
                 String id = iaRegion.getId();
                 Log.d(TAG, "floorPlan changed to " + id);
-                IALocation location = new IALocation.Builder()
-                        .withFloorLevel(2).build();
-                mIALocationManagerSecond.setLocation(location);//Explicitly set floor level to 2
-                Toast.makeText(FloorPlanActivity.this, id, Toast.LENGTH_SHORT).show();
-                fetchFloorPlan(id);
+//                IALocation location = new IALocation.Builder()
+//                        .withFloorLevel(2).build();
+//                mIALocationManagerSecond.setLocation(location);//Explicitly set floor level to 2
+//                Toast.makeText(FloorPlanActivity.this, id, Toast.LENGTH_SHORT).show();
+//                fetchFloorPlan(id);
             }
         }
 
@@ -102,11 +92,11 @@ public class FloorPlanActivity extends AppCompatActivity {
             if (iaRegion.getType() == IARegion.TYPE_FLOOR_PLAN) {
                 String id = iaRegion.getId();
                 Log.d(TAG, "floorPlan changed to " + id);
-                IALocation location = new IALocation.Builder()
-                        .withFloorLevel(2).build();
-                mIALocationManagerSecond.setLocation(location);//Explicitly set floor level to 2
-                Toast.makeText(FloorPlanActivity.this, id, Toast.LENGTH_SHORT).show();
-                fetchFloorPlan(id);
+//                IALocation location = new IALocation.Builder()
+//                        .withFloorLevel(2).build();
+//                mIALocationManagerSecond.setLocation(location);//Explicitly set floor level to 2
+//                Toast.makeText(FloorPlanActivity.this, id, Toast.LENGTH_SHORT).show();
+//                fetchFloorPlan(id);
             }
 
         }
@@ -230,26 +220,17 @@ public class FloorPlanActivity extends AppCompatActivity {
         mIALocationManagerSecond = IALocationManager.create(this);
         mFloorPlanManager = IAResourceManager.create(this);
 
-        IALocation location = new IALocation.Builder().withLatitude(START_POSITION_LAT)
-                .withLongitude(START_POSITION_LON)
-                .withAccuracy(75f)
-                .withFloorLevel(2).build();
-        mIALocationManagerSecond.setLocation(location);//Explicitly set the the initial fix as specified above
+//        IALocation location = new IALocation.Builder().withLatitude(START_POSITION_LAT)
+//                .withLongitude(START_POSITION_LON)
+//                .withAccuracy(75f)
+//                .withFloorLevel(2).build();
+//        mIALocationManagerSecond.setLocation(location);//Explicitly set the the initial fix as specified above
 
         IALocationRequest request = IALocationRequest.create();
         request.setPriority(IALocationRequest.PRIORITY_HIGH_ACCURACY);
         request.setFastestInterval(DEFAULT_INTERVAL);//Explicitly set the fastest interval for location updates in milliseconds
         request.setSmallestDisplacement(DEFAULT_DISPLACEMENT);//Set the minimum displacement between location updates in meters
 
-
-        /* optional setup of floor plan id
-           if setLocation is not called, then location manager tries to find
-           location automatically */
-        /*final String floorPlanId = "";
-        if (!TextUtils.isEmpty(floorPlanId)) {
-            final IALocation location = IALocation.from(IARegion.floorPlan(floorPlanId));
-            mIALocationManagerSecond.setLocation(location);
-        }*/
     }
 
     @Override
