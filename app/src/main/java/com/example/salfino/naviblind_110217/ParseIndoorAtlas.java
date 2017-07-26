@@ -37,28 +37,56 @@ public class ParseIndoorAtlas {
         return roomdata;
     }
 
+    public void setRoomdata(ArrayList<RoomEntry> roomdata) {
+        this.roomdata = roomdata;
+    }
+
     public ArrayList<RouteEntry> getRouteData() {
         return routedata;
+    }
+
+    public void setRoutedata(ArrayList<RouteEntry> routedata) {
+        this.routedata = routedata;
     }
 
     public ArrayList<TextEntry> getTextData() {
         return textdata;
     }
 
+    public void setTextdata(ArrayList<TextEntry> textdata) {
+        this.textdata = textdata;
+    }
+
     public ArrayList<WayPointEntry> getWayPointData() {
         return waypointdata;
+    }
+
+    public void setWaypointdata(ArrayList<WayPointEntry> waypointdata) {
+        this.waypointdata = waypointdata;
     }
 
     public ArrayList<RoomWayPointEntry> getRoomWayPointData() {
         return roomwaypointdata;
     }
 
+    public void setRoomwaypointdata(ArrayList<RoomWayPointEntry> roomwaypointdata) {
+        this.roomwaypointdata = roomwaypointdata;
+    }
+
     public ArrayList<ConfigEntry> getConfigurationData(){
         return configurationdata;
     }
 
+    public void setConfigurationdata(ArrayList<ConfigEntry> configurationdata) {
+        this.configurationdata = configurationdata;
+    }
+
     public ArrayList<EventEntry> getEventData(){
         return eventdata;
+    }
+
+    public void setEventdata(ArrayList<EventEntry> eventdata) {
+        this.eventdata = eventdata;
     }
 
     public boolean parseRoom(String xmlData) {
@@ -129,6 +157,68 @@ public class ParseIndoorAtlas {
         }
 
         return status;
+    }
+
+    public ArrayList<RoomEntry> parseRoomTest(String xmlData) {
+        RoomEntry currentRecord = null;
+        boolean inEntry = false;
+        String textValue = "";
+
+        try{
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            factory.setNamespaceAware(true);
+            XmlPullParser xpp = factory.newPullParser();
+            xpp.setInput (new StringReader(xmlData));
+            int eventType = xpp.getEventType();
+            while(eventType != XmlPullParser.END_DOCUMENT){
+                String tagName = xpp.getName();
+                switch (eventType){
+                    case XmlPullParser.START_TAG:
+                        Log.d(TAG, "parse: Starting tag for " + tagName);
+                        if ("room".equalsIgnoreCase(tagName)) {
+                            inEntry = true;
+                            currentRecord = new RoomEntry();
+                        }
+                        break;
+
+                    case XmlPullParser.TEXT:
+                        textValue = xpp.getText();
+                        break;
+
+                    case XmlPullParser.END_TAG:
+                        Log.d(TAG, "parse: Ending tag for " + tagName);
+                        if(inEntry){
+                            if("room".equalsIgnoreCase(tagName)){
+                                roomdata.add(currentRecord);
+                                inEntry = false;//Ending tag for entry
+                            } else if ("levelNo".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                currentRecord.setLevelnumber(textValue);
+                            } else if ("floorPlanId".equalsIgnoreCase(tagName)){//Guaranteed not to be Null
+                                currentRecord.setFloorplanid(textValue);
+                            } else if ("floordescription".equalsIgnoreCase(tagName)) {//Guaranteed not to be Null
+                                currentRecord.setFloordescription(textValue);
+                            }else if ("name".equalsIgnoreCase(tagName)){//Guaranteed not to be Null
+                                currentRecord.setName(textValue);
+                            }else if ("roomdescription".equalsIgnoreCase(tagName)){//Guaranteed not to be Null
+                                currentRecord.setRoomdescription(textValue);
+                            } else if ("text".equalsIgnoreCase(tagName)){
+                                currentRecord.setText(textValue);
+                            } else if ("latitude".equalsIgnoreCase(tagName)){
+                                currentRecord.setLatitude(textValue);
+                            } else if ("longitude".equalsIgnoreCase(tagName)){
+                                currentRecord.setLongitude(textValue);
+                            }
+                        }
+                        break;
+                    default: //nothing else to do
+                }
+                eventType = xpp.next();
+            }
+
+        }catch (Exception e) {
+        }
+
+        return roomdata;
     }
 
     public boolean parseEvent(String xmlData) {
