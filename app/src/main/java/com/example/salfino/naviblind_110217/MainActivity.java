@@ -57,6 +57,10 @@ import java.util.Locale;
 
 import static android.R.attr.id;
 
+// Main Class which extends AppCompatActivity. This class is the main controller of the MVC architecture
+// Class contains three inner classes: DebugGesture, speechListener and DownloadXML
+// All listeners have been implemented as part of the "Controller"
+
 public class MainActivity extends AppCompatActivity {
 
     private int[] audioCommands = {//Array of sounds
@@ -64,28 +68,25 @@ public class MainActivity extends AppCompatActivity {
             R.raw.tick,//1
             R.raw.metal_metronome,//2
     };
-    //Waypoint geo-coordinates in decimal degrees (DD)
-    public double currentDistance = 10000d;//Initialize current distance to a ridiculously large number
-    //private static final int REQUEST_CODE = 1234;
+
+    private double currentDistance = 10000d;//Initialize current distance to a ridiculously large number
     private final int MY_CODE_PERMISSIONS = 1;
     private static final int PERMISSION_REQUEST_COARSE_BL = 2;
-    //private long DEFAULT_INTERVAL = 200L;//milliseconds
-    //private float DEFAULT_DISPLACEMENT = 0.8f;//meters
-    public long DEFAULT_INTERVAL;
-    public float DEFAULT_DISPLACEMENT;
-    public double DEFAULT_ACCURACY;
-    public double DEFAULT_CURRENT_DISTANCE;
-    public float DEFAULT_SPEECH_RATE;
-    public float DEFAULT_PITCH;
-    public double DEFAULT_FF_LATITUDE;
-    public double DEFAULT_FF_LONGITUDE;
-    public float DEFAULT_FLOOR_CERTAINTY;
-    public int DEFAULT_FF_FLOOR;
-    public float DEFAULT_FF_ACCURACY;
-    public IALocationManager mIALocationManager;
-    public MediaPlayer mPlayer;
-    public SpeechRecognizer mSR;
-    public BluetoothAdapter mBTAdapter;
+    private long DEFAULT_INTERVAL; //Initialize default values
+    private float DEFAULT_DISPLACEMENT;
+    private double DEFAULT_ACCURACY;
+    private double DEFAULT_CURRENT_DISTANCE;
+    private float DEFAULT_SPEECH_RATE;
+    private float DEFAULT_PITCH;
+    private double DEFAULT_FF_LATITUDE;
+    private double DEFAULT_FF_LONGITUDE;
+    private float DEFAULT_FLOOR_CERTAINTY;
+    private int DEFAULT_FF_FLOOR;
+    private float DEFAULT_FF_ACCURACY;
+    private IALocationManager mIALocationManager;
+    private MediaPlayer mPlayer;
+    private SpeechRecognizer mSR;
+    private BluetoothAdapter mBTAdapter;
     private TextView mLogging;
     private TextView mTextView;
     private ScrollView mScrollView;
@@ -104,65 +105,60 @@ public class MainActivity extends AppCompatActivity {
     private boolean firstConfirmFlag = false;
     private boolean secondConfirmFlag = false;
 
-    public boolean endFlag = false;
+    private boolean endFlag = false;
 
-    BluetoothLeScanner scanner;
-    ScanSettings scanSettings;
-    public boolean mScanning;
-    String dName = "";
-    String macAddress = "";
-    public double rssiGR = -17;
-    public double rssiSR = -17;
-    public double rssiSG = -17;
-    public double metersGR = 10000;//Initialize current distance to a ridiculously large number
-    public double metersSR = 10000;//Initialize current distance to a ridiculously large number
-    public double metersSG = 10000;//Initialize current distance to a ridiculously large number
+    private BluetoothLeScanner scanner;
+    private ScanSettings scanSettings;
+    private boolean mScanning;
+    private String dName = "";
+    private String macAddress = "";
+    private double rssiGR = -17;
+    private double rssiSR = -17;
+    private double rssiSG = -17;
+    private double metersGR = 10000;//Initialize current distance to a ridiculously large number
+    private double metersSR = 10000;//Initialize current distance to a ridiculously large number
+    private double metersSG = 10000;//Initialize current distance to a ridiculously large number
     private GestureDetectorCompat gestureObject;
-    TextToSpeech t1;
-    Bundle params = new Bundle();
-    public ArrayList<RouteEntry> routeData;
-    public ArrayList<WayPointEntry> waypointData;
-    public ArrayList<TextEntry> textData;
-    public ArrayList<ConfigEntry> configData;
-    public ArrayList<RoomEntry> roomData;
-    public ArrayList<EventEntry> eventData;
-    public ArrayList<RoomWayPointEntry> roomwaypointData;
-    public String xmlFile;
-    public String introutterance = "";
+    private TextToSpeech t1;
+    private Bundle params = new Bundle();
+    private ArrayList<RouteEntry> routeData;
+    private ArrayList<WayPointEntry> waypointData;
+    private ArrayList<TextEntry> textData;
+    private ArrayList<ConfigEntry> configData;
+    private ArrayList<RoomEntry> roomData;
+    private ArrayList<EventEntry> eventData;
+    private ArrayList<RoomWayPointEntry> roomwaypointData;
+    private String xmlFile;
+    private String introutterance = "";
     public String confirmationutterance = "";
-    public String locationutterance = "";
-    public String menuutterance = "";
-    public String roomutterance = "";
-    public String waypointutterance = "";
-    public String repatutterance = "";
-    public String serviceutterance = "";
-    public String routeutterance = "";
-    public String norouteutterance = "";
-    public String resumeutterance = "";
-    public String mytempLocation = "";
-    public String currentId = "";
-    public int chosenRouteIndex = 0;
+    private String locationutterance = "";
+    private String menuutterance = "";
+    private String roomutterance = "";
+    private String waypointutterance = "";
+    private String repatutterance = "";
+    private String serviceutterance = "";
+    private String routeutterance = "";
+    private String norouteutterance = "";
+    private String resumeutterance = "";
+    private String mytempLocation = "";
+    private String currentId = "";
+    private int chosenRouteIndex = 0;
 
 
-    private void logText(String msg) {
-        //double duration = mRequestStartTime != 0
-        //        ? (SystemClock.elapsedRealtime() - mRequestStartTime) / 1e3
-        //        : 0d;
+
+    //// Accepts a message, font and colour and modifies the main text view accordingly
+    // @param String msg, double font size and hex
+    // @return nothing
+    public void logText(String msg, int fontsize, int hexcolour ) {
         mLogging.setText(String.format(Locale.UK, "\n %s", msg));
-        mLogging.setTextSize(25);
-        mLogging.setTextColor(0xFFFF4046);
+        mLogging.setTextSize(fontsize);
+        mLogging.setTextColor(hexcolour);
         mScrollView.smoothScrollBy(0, mLogging.getBottom());
     }
 
-    //Method to convert a byte array to a HEX. string.
-    private String byteArrayToHex(byte[] a) {
-        StringBuilder sb = new StringBuilder(a.length * 2);
-        for(byte b: a)
-            sb.append(String.format("%02x", b & 0xff));
-
-        return sb.toString();
-    }
-
+    //// Method for setting up for BLE scanning
+    // @param none
+    // @return nothing
     public void initialiseBLE(){
 
         final BluetoothManager bluetoothManager =  (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -177,6 +173,10 @@ public class MainActivity extends AppCompatActivity {
         scanner = mBTAdapter.getBluetoothLeScanner();
     }
 
+    //// Method that accepts the floor plan id and gets the standard text utterance from the TextEntry object
+    //// Calls method checkSpecialEvent() to check if any special events should be announced
+    // @param String id, which is the floorplan id retreived automatically through region change listener
+    // @return Initial text to be spoken on start of the app
     public String initializeTTS(String id){
 
         String initString = "";
@@ -210,6 +210,23 @@ public class MainActivity extends AppCompatActivity {
         return initString;
     }
 
+    //// Method accepts spoken string converted by speech synthesizer and checks if chosen destination is configured
+    // @param String myInput, converted spoken string
+    // @return match flag
+    public boolean roomwaypointVoiceMatch(String myInput) {
+
+        boolean match = false;
+
+        for (int i = 0; i < roomwaypointData.size();i++){//Iterate through both Room and Waypoint data
+            RoomWayPointEntry myObject = roomwaypointData.get(i);
+            String currentName = myObject.getName();
+            currentName = currentName.trim();
+            if (myInput.equalsIgnoreCase(currentName)){
+                match = true;
+            }
+        }
+        return match;
+    }
     public void fixLocation(){
 
         IALocation location = new IALocation.Builder().withLatitude(DEFAULT_FF_LATITUDE)
@@ -218,6 +235,10 @@ public class MainActivity extends AppCompatActivity {
                         .withFloorLevel(DEFAULT_FF_FLOOR).build();
                 mIALocationManager.setLocation(location);//Explicitly set the the initial fix as specified in configuration file
     }
+
+    //// Method uses floorplan Id to check if any special events have been recorded for particular floor
+    // @param String id, floorplanID
+    // @return String utterance describing the event(s)
     public String checkSpecialEvents(String id){
         String eventString = "";
         String allDescription = "";
@@ -247,6 +268,9 @@ public class MainActivity extends AppCompatActivity {
         return eventString;
     }
 
+    //// Method to announce the main options before the start of the route, calls texttospeech() method with "Menu" state
+    // @param String currentLocation, name of current location of the user
+    // @return nothing
     public void menu(String currentLocation){
         String allLocations = "";
 
@@ -264,6 +288,9 @@ public class MainActivity extends AppCompatActivity {
         texttospeech(menuutterance + "... " + roomutterance +"... " + waypointutterance+"... " + allLocations,"Menu",currentLocation);
     }
 
+    //// Method called when destination is chosen by user.
+    // @param Strings containin the names of start position and end position
+    // @return nothing - sets a chosenRouteIndex and calls method texttospeech with "OnNoRouteConfigured" or "OnChoosingRoute" states
     public void chooseRoute (String startname,String endname ){
 
         boolean routeFoundFlag = false;//Assume at the start that the chosen route is not in the XML file
@@ -295,48 +322,72 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //// Method that launches method texttospeech() with "OnStartText" state
+    // @param String currentLocation - name of current location of user
+    // @return nothing
     public void launchRoute(String currentLocation){
         RouteEntry myObject = routeData.get(chosenRouteIndex);
         String startText = myObject.getStartpointtext();
         texttospeech(startText,"OnStartText",currentLocation);
     }
 
+    //// Method that launches method texttospeech() with "OnFirstConfirm" state
+    // @param String currentLocation - name of current location of user
+    // @return nothing
     public void firstConfirm (String currentLocation){
         RouteEntry myObject = routeData.get(chosenRouteIndex);
         String firstConfirmText = myObject.getFirstconfirmation();
         texttospeech(firstConfirmText + "... " + resumeutterance,"OnFirstConfirm",currentLocation);
     }
 
+    //// Method that launches method texttospeech() with "OnFirstText" state
+    // @param String currentLocation - name of current location of user
+    // @return nothing
     public void launchFirstText(String currentLocation){
         RouteEntry myObject = routeData.get(chosenRouteIndex);
         String firstText = myObject.getFirstwaypointtext();
         texttospeech(firstText,"OnFirstText",currentLocation);
     }
 
+    //// Method that launches method texttospeech() with "OnSecondConfirm" state
+    // @param String currentLocation - name of current location of user
+    // @return nothing
     public void secondConfirm(String currentLocation){
         RouteEntry myObject = routeData.get(chosenRouteIndex);
         String secondConfirmText = myObject.getSecondconfirmation();
         texttospeech(secondConfirmText + "... " + resumeutterance,"OnSecondConfirm",currentLocation);
     }
 
+    //// Method that launches method texttospeech() with "OnSecondText" state
+    // @param String currentLocation - name of current location of user
+    // @return nothing
     public void launchSecondText(String currentLocation){
         RouteEntry myObject = routeData.get(chosenRouteIndex);
         String secondText = myObject.getSecondwaypointtext();
         texttospeech(secondText,"OnSecondText",currentLocation);
     }
 
+    //// Method that launches method texttospeech() with "OnEndRoute" state
+    // @param String currentLocation - name of current location of user
+    // @return nothing
     public void launchEndText(String currentLocation){
         RouteEntry myObject = routeData.get(chosenRouteIndex);
         String endText = myObject.getEndpointtext() + "... " + resumeutterance;
         texttospeech(endText,"OnEndRoute",currentLocation);
     }
 
+    //// Method that launches method texttospeech() with "OnTimeEstimate" state
+    // @param String currentLocation - name of current location of user and double routeDuration in milli seconds
+    // @return nothing
     public void estimateTime (String currentLocation, double routeDuration) {
         String timeText = "Your estimated route time was... " + routeDuration + "... seconds";
         texttospeech(timeText,"OnTimeEstimate",currentLocation);
     }
 
-    private void startLeScan(boolean enable) {
+    //// Method that starts BLE scanning and launches the Scan Callback
+    // @param boolean enable - whether the scan should be enabled i.e. true or not i.e. false
+    // @return nothing - launches startScan or stopScan methods
+    public void startLeScan(boolean enable) {
         if (enable) {
             mScanning = true;//Start BLE Scan
             scanner.startScan(null, scanSettings, mScanCallback);
@@ -347,7 +398,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private double getDistance(double rssi, String location) {//RSSI (dBm) = -10n log10(d) + A and n = 2 for free space and A is average RSSI at 1m
+    public double getDistance(double rssi, String location) {//RSSI (dBm) = -10n log10(d) + A and n = 2 for free space and A is average RSSI at 1m
         double A = -60.0;
         if (location.equals("GC")){
             A = -60.0;// average RSSI for beacon installed in George Roussos office
@@ -359,7 +410,7 @@ public class MainActivity extends AppCompatActivity {
         return Math.pow(10.0,((rssi-(A))/-25.0));//-60dBm is average RSSI at 1m distance i.e. A
     }
 
-    //Finding BLE Devices
+    ///Finding BLE Devices - BLE scan listener with Callback methods
     private ScanCallback mScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
@@ -400,7 +451,10 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private void initialiseBluetooth(){
+    //// Method for initializing Bluetooth
+    // @param none
+    // @return nothing
+    public void initialiseBluetooth(){
 
         //Check if device does support BT by hardware
         if (!getBaseContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
@@ -431,7 +485,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-   private void mediaPlayer (final File file, final String utteranceID, final String currentLocationName){
+    //// Method accepts text-to-speech generated to file in internal memory, plays the audio and controls
+    ///  the state machine based on unique utterance ids
+    // @param String currentLocation - name of current location of user, File file - TTS converted to file which
+    // is saved in internal memory, String utteranceID - unique ID that is used to control the state-machine
+    // @return nothing
+    // Error checking for the media player is included
+    public void mediaPlayer (final File file, final String utteranceID, final String currentLocationName){
 
        try {
            Uri myuri = Uri.parse(file.getPath());
@@ -555,7 +615,7 @@ public class MainActivity extends AppCompatActivity {
                                case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
                                    break;
                            }
-                           logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra);
+                           logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra,25,0xFFFF4046);
                            break;
                        case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
                            switch (extra) {
@@ -568,7 +628,7 @@ public class MainActivity extends AppCompatActivity {
                                case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
                                    break;
                            }
-                           logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra);
+                           logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra,25,0xFFFF4046);
                            break;
                    }
                    return false;
@@ -578,7 +638,10 @@ public class MainActivity extends AppCompatActivity {
            Toast.makeText(MainActivity.this, "ERROR!!!", Toast.LENGTH_LONG).show();
        }
    }
-    private void playSound (final int audioCommandIndex) {
+    //// Method that uses the MediaPlayer object to play sounds
+    // @param int audioCommandIndex - array index to choose from 3 different sounds
+    // @return nothing
+   public void playSound (final int audioCommandIndex) {
 
         try {
             mPlayer = MediaPlayer.create(this,audioCommands[audioCommandIndex]);
@@ -615,7 +678,7 @@ public class MainActivity extends AppCompatActivity {
                                 case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
                                     break;
                             }
-                            logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra);
+                            logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra,25,0xFFFF4046);
                             break;
                         case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
                             switch (extra) {
@@ -628,7 +691,7 @@ public class MainActivity extends AppCompatActivity {
                                 case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
                                     break;
                             }
-                            logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra);
+                            logText("ERROR: " + "What Code: " + what + "Extra Code: " +extra,25,0xFFFF4046);
                             break;
                     }
                     return false;
@@ -638,6 +701,10 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "ERROR!!!", Toast.LENGTH_LONG).show();
         }
     }
+    //// Method that uses the TTS engine and saves the text utterance retreived from server to a file in internal memory
+    // @param String currentLocation - name of current location of user, String text - text to be spoken, String - unique utterance id to be passed to the media player
+    // @return nothing
+    // Runs on a separate thread
     private void texttospeech(final String text, final String utteranceId,final String currentLocationName){
 
         mLogging.setText("");
@@ -649,13 +716,12 @@ public class MainActivity extends AppCompatActivity {
 
         t1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
-            public void onInit(int status) {
+            public void onInit(int status) {//Speech rate and pitch can be configured from the XML configuration file
                 if(status != TextToSpeech.ERROR){
                     t1.setLanguage(Locale.UK);
                     t1.setSpeechRate(DEFAULT_SPEECH_RATE);
                     t1.setPitch(DEFAULT_PITCH);
                     t1.synthesizeToFile(text,params,file,utteranceId);
-                    //t1.speak(text,TextToSpeech.QUEUE_FLUSH,params,utteranceId);
                 }
             }
         });
@@ -669,168 +735,121 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDone(final String utteranceId) {
                 if (utteranceId.equals("OnInitialization")){
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-                            //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
 
                 } else if (utteranceId.equals("OnLocationChanged")){
 
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-                            //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
 
                 } else if (utteranceId.equals("OnLocationChangedStart")){
 
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-                            //startOfRoute = false;
-                            //menu(currentLocationName);
                         }
                     });
                 }else if (utteranceId.equals("Menu")){
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-                            //mytempLocation = currentLocationName;
-                            //startVoiceRecognitionActivity();
                         }
                     });
                 } else if (utteranceId.equals("Repeat")){
 
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-                            //startOfRoute = true;
-                            //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
                 }else if (utteranceId.equals("OnChoosingRoute")){
 
-                            MainActivity.this.runOnUiThread(new Runnable() {
+                            MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                                 @Override
                                 public void run() {
                                     mediaPlayer(file,utteranceId,currentLocationName);
-                            //launchRoute(currentLocationName);
                         }
                     });
                 }else if (utteranceId.equals("OnStartText")){
 
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-//                            startOfRoute = false;
-//                            duringRoute = true;
-//                            startTextFlag = true;
-//                            firstTextFlag = false;
-//                            secondTextFlag = false;
-//                            mIALocationManager.removeLocationUpdates(mIALocationListener);
-//                            mIALocationManager.unregisterRegionListener(mRegionListener);
-//                            firstConfirm(currentLocationName);
-//                           ?? mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
                 }else if (utteranceId.equals("OnFirstText")){
 
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-//                            startOfRoute = false;
-//                            duringRoute = true;
-//                            startTextFlag = false;
-//                            firstTextFlag = true;
-//                            secondTextFlag = false;
-//                            mIALocationManager.removeLocationUpdates(mIALocationListener);
-//                            mIALocationManager.unregisterRegionListener(mRegionListener);
-//                            secondConfirm(currentLocationName);
-//                           ?? mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
                 }else if (utteranceId.equals("OnSecondText")){
 
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-//                            startOfRoute = false;
-//                            duringRoute = true;
-//                            startTextFlag = false;
-//                            firstTextFlag = false;
-//                            secondTextFlag = true;
-//                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         }
                     });
                 }else if (utteranceId.equals("OnEndRoute")){
 
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-//                            startOfRoute = false;
-//                            duringRoute = false;
-//                            firstTextFlag = false;
-//                            secondTextFlag = false;
-//                            mIALocationManager.removeLocationUpdates(mIALocationListener);
-//                            endFlag = true;
                         }
                     });
                 }else if (utteranceId.equals("OnNoRouteConfigured")){
 
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-                            //startOfRoute = false;
-                            // menu(currentLocationName);
                         }
                     });
                 }
 
                 else if (utteranceId.equals("OnFirstConfirm")){
 
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-                            //firstConfirmFlag = true;
-                            //secondConfirmFlag = false;
                         }
                     });
                 }
 
                 else if (utteranceId.equals("OnSecondConfirm")){
 
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-                            //secondConfirmFlag = true;
-                            //firstConfirmFlag = false;
-
                         }
                     });
                 }
 
                 else if (utteranceId.equals("OnTimeEstimate")){
 
-                    MainActivity.this.runOnUiThread(new Runnable() {
+                    MainActivity.this.runOnUiThread(new Runnable() {//Media player needs to run on main UI Thread
                         @Override
                         public void run() {
                             mediaPlayer(file,utteranceId,currentLocationName);
-                            //Do Nothing
                         }
                     });
                 }
@@ -839,54 +858,19 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(String utteranceId) {
+                //TODO Implement error checking if required
 
             }
         });
     }
 
-    private void ttsSilence(final String utteranceId){
-
-        t1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if(status != TextToSpeech.ERROR){
-                    t1.playSilentUtterance(500,1,utteranceId);
-                }
-            }
-        });
-
-        t1.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-            @Override
-            public void onStart(String utteranceId) {
-
-            }
-
-            @Override
-            public void onDone(String utteranceId) {
-                if (utteranceId.equals("1")){
-                    MainActivity.this.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            startVoiceRecognitionActivity();//Launch speech recogniser
-                        }
-                    });
-
-                }
-
-            }
-
-            @Override
-            public void onError(String utteranceId) {
-
-            }
-        });
-    }
-    @Override
+    @Override // Callback method invoked when the screen is touched - gesture object invoked as below based on gestures
     public boolean onTouchEvent(MotionEvent event) {
         this.gestureObject.onTouchEvent(event);
         return super.onTouchEvent(event);
     }
 
+    ///Gesture class with onDoubleTap and onFling methods
     private class DebugGesture extends GestureDetector.SimpleOnGestureListener{//Inner class for Gesture control
 
         @Override
@@ -920,7 +904,6 @@ public class MainActivity extends AppCompatActivity {
             }else if (!endFlag & !firstConfirmFlag & secondConfirmFlag){
                 secondConfirmFlag = false;
                 mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-
             }
             return super.onDoubleTap(e);
         }
@@ -945,7 +928,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
+    @Override//Main onCreate callback method called as soon as the application is launched
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -1074,7 +1057,7 @@ public class MainActivity extends AppCompatActivity {
     public IALocationListener mIALocationListener = new IALocationListener() {
       //Implement an IALocationListener interface and override its onLocationChanged() callback method
       @Override
-      public void onLocationChanged(IALocation iaLocation) {
+      public void onLocationChanged(IALocation iaLocation) {//Main logic for Geofencing and Control of state machine implemented here
 
           String currentLocationName = "";//Debug data to monitor location and accuracy
           mTextView.setText(String.format(Locale.UK, "Latitude: %.8f,\nLongitude: %.8f,\nAccuracy: %.8f,\nCertainty: %.8f,\nLevel: %d, \nAltitude: %.8f.",
@@ -1133,7 +1116,7 @@ public class MainActivity extends AppCompatActivity {
           }
       }
 
-      @Override//Check calibration and WIFI service and provide a promt on the screen for debugging purposes
+      @Override//Check calibration and WIFI service and provide a prompt on the screen for debugging purposes
       public void onStatusChanged(String provider, int status, Bundle bundle) {
           mPlayer = null;
           switch (status) {
@@ -1154,25 +1137,25 @@ public class MainActivity extends AppCompatActivity {
                           break;
                   }
                   //logText("Calibration Quality: " + quality + " Status Code: " + status);
-                  logText("Calibration: " + quality);
+                  logText("Calibration: " + quality,25,0xFFFF4046);
                   break;
               case IALocationManager.STATUS_AVAILABLE:
                   //logText("onStatusChanged: Available" + " Status Code: " + status);
-                  logText("Status: Available");
+                  logText("Status: Available",25,0xFFFF4046);
                   statusOK = true;
                   break;
               case IALocationManager.STATUS_LIMITED:
-                  logText("Status: Limited");
+                  logText("Status: Limited",25,0xFFFF4046);
                   statusOK = true;
                   playSound(1);//Play tick sound
                   break;
               case IALocationManager.STATUS_OUT_OF_SERVICE:
-                  logText("Status: Out of service");
+                  logText("Status: Out of service",25,0xFFFF4046);
                   statusOK = false;
                   playSound(1);//Play tick sound
                   break;
               case IALocationManager.STATUS_TEMPORARILY_UNAVAILABLE:
-                  logText("Status: Temporarily unavailable");
+                  logText("Status: Temporarily unavailable",25,0xFFFF4046);
                   playSound(1);//Play tick sound
                   statusOK = false;
           }
@@ -1180,7 +1163,7 @@ public class MainActivity extends AppCompatActivity {
   };
 
     private IARegion.Listener mRegionListener = new IARegion.Listener() {
-        @Override
+        @Override//Floor plan ID retreived as soon as region change is detected
         public void onEnterRegion(IARegion iaRegion) {
             if (iaRegion.getType() == IARegion.TYPE_FLOOR_PLAN) {
                 currentId = iaRegion.getId();
@@ -1190,6 +1173,7 @@ public class MainActivity extends AppCompatActivity {
                 mIALocationManager.unregisterRegionListener(mRegionListener);
                 String initString = initializeTTS(currentId);//Initialize TTS parameters and get current floor plan details
                 texttospeech(initString,"OnInitialization","");//Launch "On Initialization" state
+                // Type of utterance is selected based on floor plan ID
             }
         }
 
@@ -1199,6 +1183,7 @@ public class MainActivity extends AppCompatActivity {
             if (iaRegion.getType() == IARegion.TYPE_FLOOR_PLAN) {
                 String id = iaRegion.getId();
                 Log.d(TAG, "floorPlan changed to " + id);
+                //Do nothing in particular as soon as you leave the region
             }
         }
     };
@@ -1282,7 +1267,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_test_activity:
-                Intent m = new Intent(MainActivity.this, TestActivity.class);
+                Intent m = new Intent(MainActivity.this, BLEMonitor.class);
                 startActivity(m);
                 if(mPlayer != null && mPlayer.isPlaying())
                 {
@@ -1295,6 +1280,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /// SpeechListener class implements RecognitionListener interface
+    // A number of callback methods called based on RecognitionListener state
     private class speechListener implements RecognitionListener {
 
         @Override
@@ -1348,17 +1335,19 @@ public class MainActivity extends AppCompatActivity {
             mLogging.setTextColor(0xFFFFFFFF);
             mScrollView.smoothScrollBy(0, mLogging.getBottom());
             currentDistance = 100d;
-            boolean match = false;
+
+            boolean match = roomwaypointVoiceMatch(myInput);
+
             Toast.makeText(MainActivity.this, "DEBUG::" + myInput, Toast.LENGTH_SHORT).show();
 
-            for (int i = 0; i < roomwaypointData.size();i++){//Iterate through both Room and Waypoint data
-                RoomWayPointEntry myObject = roomwaypointData.get(i);
-                String currentName = myObject.getName();
-                currentName = currentName.trim();
-                if (myInput.equalsIgnoreCase(currentName)){
-                    match = true;
-                }
-            }
+//            for (int i = 0; i < roomwaypointData.size();i++){//Iterate through both Room and Waypoint data
+//                RoomWayPointEntry myObject = roomwaypointData.get(i);
+//                String currentName = myObject.getName();
+//                currentName = currentName.trim();
+//                if (myInput.equalsIgnoreCase(currentName)){
+//                    match = true;
+//                }
+//            }
             if (myInput.equals("yes go on")){//NOT USED YET
                 duringRoute = true;
                 mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
@@ -1382,13 +1371,6 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "onPartialResults");
 
             texttospeech(repatutterance,"Repeat","");
-            //introduction();
-            //for (int i = 0; i < data.size(); i++)
-            //{
-             //   Log.d(TAG, "result " + data.get(i));
-             //   mystr += data.get(i);
-            //}
-            //mTextView.setText("results: " + String.valueOf(data.size()));
         }
 
         @Override
@@ -1411,22 +1393,7 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,2000);
         intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,8000);
         mSR.startListening(intent);
-
-        //startActivityForResult(intent, REQUEST_CODE);//Start an activity and get a result back
-        //When user is done, onActivityResult() method is called
     }
-
-//    @Override
-//    //INPUT: Request code passed to startActivityForResult(), resultCode is either RESULT_OK or RESULT_CANCELED
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK)
-//        {
-//            // Populate the wordsList with the String values the recognition engine thought it heard
-//            ArrayList<String> matches = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-//            //mwordsList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, matches));
-//        }
-//        super.onActivityResult(requestCode, resultCode, data);
-//    }
 
     private class DownloadXML extends AsyncTask<String,Void,String> {//Defined as an Inner class
         private static final String TAG = "DownloadData";
