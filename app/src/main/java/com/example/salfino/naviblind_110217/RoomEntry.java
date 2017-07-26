@@ -79,7 +79,7 @@ public class RoomEntry {
         this.text = text;
     }
 
-    @Override
+    @Override//To be used for testing purposes - see ParseIndoorAtlas Class
     public String toString() {
         return "RoomEntry{" +
                 "levelnumber='" + levelnumber + '\'' +
