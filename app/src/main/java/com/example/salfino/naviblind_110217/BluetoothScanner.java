@@ -37,7 +37,6 @@ public class BluetoothScanner extends AppCompatActivity {
     BluetoothLeScanner scanner;
     ScanSettings scanSettings;
 
-
     private List<String> scannedDeivcesList;
     private ArrayAdapter<String> adapter;
 
@@ -64,21 +63,9 @@ public class BluetoothScanner extends AppCompatActivity {
         //Set the adapter to the listview
         devicesList.setAdapter(adapter);
 
-
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-       // SpannableString s = new SpannableString("Scan beacons");
-
-       // s.setSpan(new com.example.salfino.naviblind_110217.TypefaceSpan(this, "Khand-Bold.ttf"), 0, s.length(),
-        //        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        //s.setSpan(new ForegroundColorSpan(Color.parseColor("#3a3c3e")), 0, s.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
-        //setTitle(s);
-
-        //getSupportActionBar().setLogo(R.mipmap.ibks);
-        //getSupportActionBar().setDisplayUseLogoEnabled(true);
-        //getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         //init Bluetooth adapter
         initBT();
