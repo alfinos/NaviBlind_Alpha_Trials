@@ -1,7 +1,6 @@
 package com.example.salfino.naviblind_110217;
 
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
@@ -10,7 +9,6 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,19 +16,16 @@ import android.widget.Toast;
 import java.util.List;
 import java.util.Locale;
 
-public class TestActivity extends AppCompatActivity {
+public class BLEMonitor extends AppCompatActivity {
 
     public TextView mTest;
     public TextView mTest2;
     public TextView mTest3;
     public final static int REQUEST_ENABLE_BT = 1;
     public BluetoothAdapter mBTAdapter;
-    BluetoothGatt mBluetoothGatt;
     BluetoothLeScanner scanner;
     ScanSettings scanSettings;
     public boolean mScanning;
-    public Handler mHandler;
-    public static final long SCAN_PERIOD = 10000;
     String dName = "";
     String macAddress = "";
     Integer rssi = 0;
@@ -54,14 +49,9 @@ public class TestActivity extends AppCompatActivity {
 
         initialiseBLE();
         startLeScan(true);
-        Toast.makeText(TestActivity.this, "SCAN STARTED...", Toast.LENGTH_LONG).show();
-        /*if (mScanning) {
-            mTest.setText("Scanning for BLE Devices");
-        }
-        else{
-            mTest.setText("Stopped Scanning...");
-        }*/
+        Toast.makeText(BLEMonitor.this, "SCAN STARTED...", Toast.LENGTH_LONG).show();
     }
+
     //Method to convert a byte array to a HEX. string.
     private String byteArrayToHex(byte[] a) {
         StringBuilder sb = new StringBuilder(a.length * 2);
@@ -90,15 +80,6 @@ public class TestActivity extends AppCompatActivity {
     }
     private void startLeScan(boolean enable) {
         if (enable) {
-            // Stops scanning after a pre-defined scan period.
-           /* mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mScanning = false;
-                    scanner.stopScan(mScanCallback);
-                    mTest.setText("Stopped Scanning...");
-                }
-            }, SCAN_PERIOD);*/
             //********************
             //START THE BLE SCAN
             //********************
@@ -147,9 +128,6 @@ public class TestActivity extends AppCompatActivity {
                 macAddress = (result.getDevice().getAddress()).trim();
             }
 
-            /*mTest.setText(String.format(Locale.UK, "RSSI: %d, \nMAC Address: %s, \nDevice Name: %s",
-                    result.getRssi(), result.getDevice().getAddress(), result.getDevice().getName()));*/
-
             if (macAddress != null && macAddress.equals("F4:46:EA:8F:C2:2D")) {
                 mTest.setText(String.format(Locale.UK, "Position: %s,\nRSSI: %d, \nMeters: %f",
                         "266 Beacon", result.getRssi(), getDistance(result.getRssi(), "GC")));
@@ -160,26 +138,11 @@ public class TestActivity extends AppCompatActivity {
                 mTest3.setText(String.format(Locale.UK, "Position: %s,\nRSSI: %d, \nMeters: %f",
                         "SG Beacon", result.getRssi(), getDistance(result.getRssi(), "SG")));
 
-            }
-
-            else
-
-            {
+            } else {
                 mTest.setText("Can't find End Point Beacon!!!");
                 mTest2.setText("Can't find Lifts Area Beacon!!!");
                 mTest3.setText("Can't find Systems Group Beacon!!!");
             }
-
-            /*if (dName != null && macAddress != null) {
-                if (dName.equals("iBKS105") && macAddress.equals("F4:46:EA:8F:C2:2D")) {
-                    mTest.setText(String.format(Locale.UK, "RSSI: %d, \nAdvertisment: %s, \nMAC Address: %s, \nDevice Name: %s",
-                        result.getRssi(), advertisingString, result.getDevice().getAddress(), result.getDevice().getName()));
-                } else {
-                     mTest.setText("Scanning for GR Waypoint Device...");
-            }
-            } else {
-                mTest.setText("Reading NULL...");
-            }*/
 
         }
 
@@ -203,7 +166,7 @@ public class TestActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         startLeScan(false);
-        Toast.makeText(TestActivity.this, "SCAN STOPPED...", Toast.LENGTH_LONG).show();
+        Toast.makeText(BLEMonitor.this, "SCAN STOPPED...", Toast.LENGTH_LONG).show();
     }
 
     @Override
