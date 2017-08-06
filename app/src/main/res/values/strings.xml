@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">NaviBlind XML</string>
+    <string name="app_name">NaviBlind ALPHA</string>
     <string name="floor_plan">Floor Plan</string>
     <string name="debug">BLE Scan</string>
     <string name="test">Find Beacons</string>
+
 </resources>
