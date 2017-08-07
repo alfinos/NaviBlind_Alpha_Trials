@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean secondConfirmFlag = false;
     private boolean endFlag = false;
     private boolean onCreateFlag = true;
+    private boolean onLocationChangeFlag = false;
 
     private BluetoothLeScanner scanner;
     private ScanSettings scanSettings;
@@ -265,7 +266,9 @@ public class MainActivity extends AppCompatActivity {
       @Override
       public void onLocationChanged(IALocation iaLocation) {//Main logic for Geofencing and Control of state machine implemented here
 
-            if (onCreateFlag){
+          onLocationChangeFlag = true;
+
+          if (onCreateFlag){
                 fixLocation();
             }
           String currentLocationName = "";//Debug data to monitor location and accuracy
@@ -346,18 +349,26 @@ public class MainActivity extends AppCompatActivity {
               //Monitor state flags to decide which logic to perform
 
               if ((startOfRoute)&(!duringRoute)&(!locationString.equals("No Location"))){
+                  onLocationChangeFlag = false;
                   texttospeech(locationString,"OnLocationChangedStart",currentLocationName);
               }else if ((!startOfRoute)&(!duringRoute)&(!locationString.equals("No Location"))) {
+                  onLocationChangeFlag = false;
                   texttospeech(locationString, "OnLocationChanged", currentLocationName);
               }else if ((!startOfRoute)&(duringRoute)&(preFirstText)&(!locationString.equals("No Location"))) {
+                  onLocationChangeFlag = false;
                   texttospeech(locationString, "PreFirstText", currentLocationName);
               }else if ((!startOfRoute)&(duringRoute)&(preSecondText)&(!locationString.equals("No Location"))) {
+                  onLocationChangeFlag = false;
                   texttospeech(locationString,"PreSecondText",currentLocationName);
               }else if ((!startOfRoute)&(duringRoute)&(!firstTextFlag)&(!secondTextFlag)&(!locationString.equals("No Location"))) {
+                  onLocationChangeFlag = false;
                   mRoute.launchFirstText(currentLocationName);
               }else if ((!startOfRoute)&(duringRoute)&(firstTextFlag)&(!secondTextFlag)&(!locationString.equals("No Location"))) {
+                  onLocationChangeFlag = false;
                   mRoute.launchSecondText(currentLocationName);
               }else if ((!startOfRoute)&(duringRoute)&(!firstTextFlag)&(secondTextFlag)&(!locationString.equals("No Location"))){
+                  onLocationChangeFlag = false;
+                  secondTextFlag = false;
                   mRoute.launchEndText(currentLocationName);
 
               }else {
@@ -416,6 +427,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+
+        if (onLocationChangeFlag){
+        mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+        }
+
         if(mPlayer != null)
         {
             mPlayer.start();
@@ -426,6 +442,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+
+        if (onLocationChangeFlag){
+            mIALocationManager.removeLocationUpdates(mIALocationListener);
+        }
+
         if(mPlayer != null && mPlayer.isPlaying())
         {
             mPlayer.pause();
@@ -444,17 +465,18 @@ public class MainActivity extends AppCompatActivity {
 
     @Override//Just added to compare the difference
     protected void onStop() {
-        mIALocationManager.destroy();
-        mRequestStartTime = SystemClock.elapsedRealtime();
         super.onStop();
-        if(mPlayer != null) {
-            mPlayer.release();//releasing and nullifying MediaPLayer
-        }
-
-        if(t1 !=null){
-            t1.stop();
-            t1.shutdown();
-        }
+//        mIALocationManager.destroy();
+//        mRequestStartTime = SystemClock.elapsedRealtime();
+//        super.onStop();
+//        if(mPlayer != null) {
+//            mPlayer.release();//releasing and nullifying MediaPLayer
+//        }
+//
+//        if(t1 !=null){
+//            t1.stop();
+//            t1.shutdown();
+//        }
     }
 
     @Override
@@ -880,14 +902,13 @@ public class MainActivity extends AppCompatActivity {
                     file.delete();
 
                     switch (utteranceID) {
-                        case "OnInitialization":
-                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
-                            //fixLocation();//Fix location before getting location updates
-                            break;
-                        case "OnLocationChanged":
+                        case "OnInitialization"://Floor description
                             mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                             break;
-                        case "OnLocationChangedStart":
+                        case "OnLocationChanged"://Location description
+                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                            break;
+                        case "OnLocationChangedStart"://Location description
                             startOfRoute = false;
                             onCreateFlag = false;
                             mRoute.menu(currentLocationName);
@@ -904,7 +925,7 @@ public class MainActivity extends AppCompatActivity {
                             mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                             break;
                         case "OnChoosingRoute":
-                            mRoute.launchRoute(currentLocationName);
+                            mRoute.launchRoute(currentLocationName);//Next state is "OnStartText"
                             break;
                         case "OnStartText":
                             startOfRoute = false;
@@ -913,7 +934,7 @@ public class MainActivity extends AppCompatActivity {
                             firstTextFlag = false;
                             secondTextFlag = false;
                             mIALocationManager.removeLocationUpdates(mIALocationListener);
-                            mRoute.firstConfirm(currentLocationName);
+                            mRoute.firstConfirm(currentLocationName);//Next state is "OnFirstConfirm"
                             preFirstText = true;
                             break;
                         case "PreFirstText":
@@ -927,7 +948,7 @@ public class MainActivity extends AppCompatActivity {
                             firstTextFlag = true;
                             secondTextFlag = false;
                             mIALocationManager.removeLocationUpdates(mIALocationListener);
-                            mRoute.secondConfirm(currentLocationName);
+                            mRoute.secondConfirm(currentLocationName);//Next state is "OnSecondConfirm"
                             preSecondText = true;
                             break;
                         case "PreSecondText":
@@ -969,6 +990,7 @@ public class MainActivity extends AppCompatActivity {
                             firstConfirmFlag = false;
                             break;
                         case "RouteOK":
+                            playSound(3);
                             if ((!startOfRoute)&(duringRoute)&(!firstTextFlag)&(!secondTextFlag)) {
                                 mRoute.launchFirstText(currentLocationName);
                             }else if ((!startOfRoute)&(duringRoute)&(firstTextFlag)&(!secondTextFlag)) {
@@ -976,6 +998,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                             break;
                         case "RouteWRONG":
+                            playSound(4);
                             startOfRoute = false;
                             duringRoute = false;
                             firstTextFlag = false;
@@ -1226,11 +1249,11 @@ public class MainActivity extends AppCompatActivity {
                     makeText(MainActivity.this,currentLocation , Toast.LENGTH_SHORT).show();
                     if (currentFirstName.equalsIgnoreCase(currentLocation.trim())){
                         makeText(MainActivity.this,"Location Correct! You are on your way!!!" , Toast.LENGTH_SHORT).show();
-                        playSound(3);
+                        //playSound(3);
                         texttospeech("You are on the correct route. Continue to your destination.", "RouteOK", currentLocation);
                 }else {
                         makeText(MainActivity.this,"Location  Not Correct! Exit Route State!!!" + utteranceID , Toast.LENGTH_SHORT).show();
-                        playSound(4);
+                        //playSound(4);
                         texttospeech("You strayed away from your route... Seek assistance now... " + resumeutterance , "RouteWRONG", currentLocation);
                         //Break state machine i..e get out of route mode
                     }
@@ -1244,11 +1267,11 @@ public class MainActivity extends AppCompatActivity {
 
                     if (currentSecondName.equalsIgnoreCase(currentLocation.trim())){
                         makeText(MainActivity.this,"Location Correct! You are on your way!!!" , Toast.LENGTH_SHORT).show();
-                        playSound(3);
+                        //playSound(3);
                         texttospeech("You are on the correct route. Continue to your destination.", "RouteOK", currentLocation);
                     }else {
                         makeText(MainActivity.this,"Location Correct! Exit Route State!!!" + utteranceID , Toast.LENGTH_SHORT).show();
-                        playSound(4);
+                        //playSound(4);
                         texttospeech("You strayed away from your route... Seek assistance now... " + resumeutterance , "RouteWRONG", currentLocation);
                         //Break state machine i..e get out of route mode
                     }
@@ -1545,6 +1568,8 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            final Route mRoute = new Route();
+            String currentLocationName = "";
 
             if(e2.getX() > e1.getX()){
                 if(mPlayer != null && mPlayer.isPlaying())//Action when swiping to the RIGHT
@@ -1554,9 +1579,22 @@ public class MainActivity extends AppCompatActivity {
 
             } else if (e2.getX() < e1.getX()){//Action when swiping to the LEFT
 
-                if(mPlayer != null && mPlayer.isPlaying())
-                {
-                    mPlayer.seekTo(0);//Resume audio when user swipes to the left
+                if(firstConfirmFlag & !secondConfirmFlag){
+                    firstConfirmFlag = false;
+                    secondConfirmFlag = false;
+                    mRoute.launchRoute(currentLocationName);//Next state is "OnStartText"
+
+                }else if (!firstConfirmFlag & secondConfirmFlag) {
+                    firstConfirmFlag = false;
+                    secondConfirmFlag = false;
+                    mRoute.launchFirstText(currentLocationName);
+
+                } else {
+
+                    if(mPlayer != null && mPlayer.isPlaying())
+                    {
+                        mPlayer.seekTo(0);//Resume audio when user swipes to the left
+                    }
                 }
             }
 
