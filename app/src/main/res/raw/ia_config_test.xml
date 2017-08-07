@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<bbk>
+
+<!-->Configuration Parameters declarations<-->
+
+    <parameter>
+      <defaultinterval>100</defaultinterval>    <!-- >Was 200< -->
+      <defaultdisplacement>0.4</defaultdisplacement>     <!-- >Was 0.8< -->
+      <defaultaccuracy>8</defaultaccuracy>           <!-->Was 5<-->
+      <defaultcurrentdistance>4.5</defaultcurrentdistance>     <!-->Was 2.5<-->
+      <defaultfloorcertainty>0.7</defaultfloorcertainty>
+      <defaultspeechrate>0.8</defaultspeechrate>
+      <defaultpitch>0.8</defaultpitch> 
+      <firstfixlatitude>51.52231720</firstfixlatitude>   <!-->First Fix Stairs E...<-->
+      <firstfixlongitude>-0.13089649</firstfixlongitude>
+      <firstfixfloor>2</firstfixfloor> 
+      <firstfixaccuracy>75</firstfixaccuracy>  
+    </parameter>
+    
+<!-->////////////////////////////////////////////////////////////////////////////////////////////////////////////////<-->
+    
+<!-->General text declarations<-->
+
+    <maintext>
+      <introtext>You are now in the... </introtext>
+      <locationtext>You are at location... </locationtext>
+      <menutext>Select from the following destinations by repeating the name after the notification alert... </menutext>
+      <roomtext>select one of these rooms... </roomtext>
+      <waypointtext>or waypoints</waypointtext>
+      <confirmationtext>Are you ready to go...  when ready wait for the notification alert and say...  yes go on</confirmationtext>
+      <repeattext>Response not valid... Please wait for location update...</repeattext>
+      <servicetext>Please wait...  service not ready</servicetext>
+      <eventsintrotext>Be careful...  there are the following events on this floor</eventsintrotext>
+      <noeventstext>No events detected</noeventstext>
+      <routetext>The selected route is... </routetext>
+      <noroutetext>This route is not yet configured in the system... please choose another route</noroutetext>
+      <resumetext>Double tap the middle of your phone's screen when ready to resume... </resumetext>
+    </maintext>
+    
+<!-->////////////////////////////////////////////////////////////////////////////////////////////////////////////////<-->
+
+<!-->Rooms, Waypoints and Special Event declarations<-->
+    
+  <location>
+    <name>BBK Extension Building</name>
+    <locationId>2fb1f15e-9f76-460d-80c8-981d9915dd8d</locationId>
+    
+    <floor>
+      <levelNo>2</levelNo>
+      <floorPlanId>85b435a5-971f-47c3-8d33-23831680cca0</floorPlanId>
+      <description>Second floor computer science department...  which has researcher's offices... administration office... system's group office... and lecture rooms</description>
+      
+      <room>
+        <levelNo>A</levelNo>
+        <floorPlanId>B</floorPlanId>
+        <floordescription>C</floordescription>
+        <name>D</name>
+        <roomdescription>E</roomdescription>
+        <latitude>F</latitude>
+        <longitude>G</longitude>
+        <text>H</text>
+      </room>
+
+      <room>
+        <levelNo>A</levelNo>
+        <floorPlanId>B</floorPlanId>
+        <floordescription>C</floordescription>
+        <name>D</name>
+        <roomdescription>E</roomdescription>
+        <latitude>F</latitude>
+        <longitude>G</longitude>
+        <text>H</text>
+      </room>
+
+      <room>
+        <levelNo>A</levelNo>
+        <floorPlanId>B</floorPlanId>
+        <floordescription>C</floordescription>
+        <name>D</name>
+        <roomdescription>E</roomdescription>
+        <latitude>F</latitude>
+        <longitude>G</longitude>
+        <text>H</text>
+      </room>
+
+      <!-->Waypoints declarations<-->
+      
+      <waypoint>
+        <levelNo>2</levelNo>
+        <floorPlanId>85b435a5-971f-47c3-8d33-23831680cca0</floorPlanId>                                                                    
+        <floordescription>Second floor computer science department...   with researcher's offices... , administration office... , system's group office...  and lecture rooms... </floordescription>
+        <name>Stairs E</name>
+        <waypointdescription>Fire exit stairs on 2nd floor labelled as stairs E</waypointdescription>
+        <latitude>51.52231720</latitude>
+        <longitude>-0.13089649</longitude>
+        <text>You are at waypoint stairs E on 2nd floor</text>
+      </waypoint>
+      
+      <!-->Event declarations<-->
+      
+      <event>
+        <levelNo>2</levelNo>
+        <floorPlanId>85b435a5-971f-47c3-8d33-23831680cca0</floorPlanId>
+        <floordescription>Second floor computer science department...   with researcher's offices... , administration office... , system's group office...  and lecture rooms... </floordescription>
+        <name>None</name>      <!-->Use None in name for declaring no events...<-->
+        <eventdescription></eventdescription>
+        <latitude></latitude>
+        <longitude></longitude>
+        <text></text>
+      </event>
+      
+      
+    </floor>
+  
+<!-->  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////<-->
+
+
+<!-->Routes for each floor declaration<-->
+
+  <routes>
+  
+  <!-->Second Floor Route Declaration<-->
+  <floor>
+    <levelNo>2</levelNo>
+    <floorPlanId>85b435a5-971f-47c3-8d33-23831680cca0</floorPlanId>
+    <description>Second floor computer science department  with researcher's offices, administration office, system's group office and lecture rooms</description>
+    
+    <route>
+      <levelNo>2</levelNo>
+      <floorPlanId>85b435a5-971f-47c3-8d33-23831680cca0</floorPlanId>
+      <description>From Level 2 Stairs E to room number 266</description>
+      <startname>Stairs E</startname>
+      <starttext>Please start walking forward for about... twenty steps... then turn cautiously to the left and take the sub-level stairways
+                containing four steps down towards the main corridor... </starttext>
+      <firstname>Four steps sub-level stairway... </firstname>
+      <firsttext>Be careful... use the hand rails and take the four
+                step sub-level stairway down to the main corridor... this corridor is narrow and long, keep
+                walking forward for about... twenty five more steps... at the end of this corridor take the
+                sub-level stairways containing two steps up and turn to the... right... towards room number two six six.</firsttext>
+      <firstconfirmation>Confirm the presence of the... four step sub-level stairway...when you get there... </firstconfirmation>         
+      <secondname>Two steps sub-level stairway</secondname>
+      <secondtext>Use the hand rails... and take the sub-level stairways containing
+                two steps up and turn to the... right... towards room number two six six... keep walking forward for
+                about fifteen more steps... room number two six six is at the end of this corridor,
+                to the left passed a narrow open doorway.</secondtext>
+      <secondconfirmation>Confirm the presence of the... two step sub-level stairway...when you get there... </secondconfirmation>
+      <endname>266</endname>
+      <endtext>You have arrived to room number two six six... 
+                which has its door to your left</endtext>
+    </route>
+  
+  </floor>
+  </routes>
+  </location>
+  
+</bbk>
