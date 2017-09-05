@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private float DEFAULT_FF_ACCURACY;
     private double MAX_DURATION;
     private IALocationManager mIALocationManager;
+    private IALocationRequest request;
     private MediaPlayer mPlayer;
     private SpeechRecognizer mSR;
     private BluetoothAdapter mBTAdapter;
@@ -211,24 +212,26 @@ public class MainActivity extends AppCompatActivity {
                 DEFAULT_FF_ACCURACY = Float.parseFloat(myConfigObject.getFirstfixaccuracy());
                 MAX_DURATION = Double.parseDouble(myConfigObject.getMaxduration());
 
-                IALocationRequest request = IALocationRequest.create();//Set High accuracy as priority and fastest interval and default displacement
+                request = IALocationRequest.create();//Set High accuracy as priority and fastest interval and default displacement
                 request.setPriority(IALocationRequest.PRIORITY_HIGH_ACCURACY);//High-accuracy updates requested
                 request.setFastestInterval(DEFAULT_INTERVAL);//Explicitly set the fastest interval for location updates in milliseconds
                 request.setSmallestDisplacement(DEFAULT_DISPLACEMENT);//Set the minimum displacement between location updates in meters
+                makeText(MainActivity.this, "DEFAULT_INTERVAL :" + DEFAULT_INTERVAL, Toast.LENGTH_SHORT).show();
+                makeText(MainActivity.this, "DEFAULT_DISPLACEMENT :" + DEFAULT_DISPLACEMENT, Toast.LENGTH_SHORT).show();
                 mRequestStartTime = SystemClock.elapsedRealtime();
                 onCreateFlag = true;
 
                 //If automatic region detect is enabled, uncomment the two lines below and comment lines from currentId onwards
-                //mIALocationManager.registerRegionListener(mRegionListener);//Start listening for change in region
-                //mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                mIALocationManager.registerRegionListener(mRegionListener);//Start listening for change in region
+                mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
 
                 //The below is ideally done on region enter - however, for trial doing this with hard coded second floor Id is more robust
 
-                currentId = "85b435a5-971f-47c3-8d33-23831680cca0";
-                makeText(MainActivity.this, "REGION :" + currentId, Toast.LENGTH_SHORT).show();
+                //currentId = "85b435a5-971f-47c3-8d33-23831680cca0";
+                //makeText(MainActivity.this, "REGION :" + currentId, Toast.LENGTH_SHORT).show();
                 //mRequestStartTime = SystemClock.elapsedRealtime();
-                String initString = initializeTTS(currentId);//Initialize TTS parameters and get current floor plan details
-                texttospeech(initString,"OnInitialization","");//Launch "On Initialization"
+                //String initString = initializeTTS(currentId);//Initialize TTS parameters and get current floor plan details
+                //texttospeech(initString,"OnInitialization","");//Launch "On Initialization"
             }
         }.start();
     }
@@ -237,15 +240,15 @@ public class MainActivity extends AppCompatActivity {
         @Override//Floor plan ID retreived as soon as region change is detected
         public void onEnterRegion(IARegion iaRegion) {
             if (iaRegion.getType() == IARegion.TYPE_FLOOR_PLAN) {
-//                currentId = iaRegion.getId();
-//                //currentId = "85b435a5-971f-47c3-8d33-23831680cca0";
-//                makeText(MainActivity.this, "REGION :" + currentId, Toast.LENGTH_SHORT).show();
-//                Log.d(TAG, "floorPlan changed to " + currentId);
-//                mIALocationManager.removeLocationUpdates(mIALocationListener);
-//                mIALocationManager.unregisterRegionListener(mRegionListener);
+                currentId = iaRegion.getId();
+                //currentId = "85b435a5-971f-47c3-8d33-23831680cca0";
+                makeText(MainActivity.this, "REGION :" + currentId, Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "floorPlan changed to " + currentId);
+                mIALocationManager.removeLocationUpdates(mIALocationListener);
+                mIALocationManager.unregisterRegionListener(mRegionListener);
 //                mRequestStartTime = SystemClock.elapsedRealtime();
-//                String initString = initializeTTS(currentId);//Initialize TTS parameters and get current floor plan details
-//                texttospeech(initString,"OnInitialization","");//Launch "On Initialization" state
+                String initString = initializeTTS(currentId);//Initialize TTS parameters and get current floor plan details
+                texttospeech(initString,"OnInitialization","");//Launch "On Initialization" state
                 // Type of utterance is selected based on floor plan ID
             }
         }
@@ -266,10 +269,12 @@ public class MainActivity extends AppCompatActivity {
       @Override
       public void onLocationChanged(IALocation iaLocation) {//Main logic for Geofencing and Control of state machine implemented here
 
+
           onLocationChangeFlag = true;
 
-          if (onCreateFlag){
+           if (onCreateFlag){
                 fixLocation();
+                makeText(MainActivity.this, "!!Location Fixed!!", Toast.LENGTH_SHORT).show();
             }
           String currentLocationName = "";//Debug data to monitor location and accuracy
           currentDistance = 1000d;//Assume you are far from all waypoints when location change is detected
@@ -309,31 +314,37 @@ public class MainActivity extends AppCompatActivity {
 
                     if (currentDistance <= DEFAULT_CURRENT_DISTANCE){//If accuracy of a decent level, get location details
                         //Use code below if you want to read the floor level in real-time rather than use second floor as for trials
-//                        int currentLevelNumber = Integer.parseInt(myObject.getLevelnumber());
-//                        int estimatedLevelNumber = iaLocation.getFloorLevel();
-//                        if (currentLevelNumber == estimatedLevelNumber & iaLocation.getFloorCertainty() >= DEFAULT_FLOOR_CERTAINTY) {
-//                            String textutternace = myObject.getText();
-//                            String descriptionutternace = myObject.getDescription();
-//                            currentLocationName = myObject.getName();//Always monitor current location name
-//                            locationString = textutternace + "... " + descriptionutternace;
-//                            break;//Break as soon as a location is found nearby
-//                        }
+                        int currentLevelNumber = Integer.parseInt(myObject.getLevelnumber());
+                        int estimatedLevelNumber = iaLocation.getFloorLevel();
+                        if (currentLevelNumber == estimatedLevelNumber & iaLocation.getFloorCertainty() >= DEFAULT_FLOOR_CERTAINTY) {
+                            String textutternace = myObject.getText();
+                            String descriptionutternace = myObject.getDescription();
+                            currentLocationName = myObject.getName();//Always monitor current location name
+                            locationString = textutternace + "... " + descriptionutternace;
 
-                         currentFloorPlanId = myObject.getFloorplanid().trim();
-                         if (currentFloorPlanId.equalsIgnoreCase(currentId)) {
-                             String textutternace = myObject.getText();
-                             String descriptionutternace = myObject.getDescription();
-                             currentLocationName = myObject.getName();//Always monitor current location name
-                             locationString = textutternace + "... " + descriptionutternace;
+                            mTextView.setText(String.format(Locale.UK, "Latitude: %.8f,\nLongitude: %.8f,\nAccuracy: %.8f,\nCertainty: %.8f,\nLevel: %d, \nDistance: %.8f., \nLocation: %s",
+                                    iaLocation.getLatitude(), iaLocation.getLongitude(),iaLocation.getAccuracy(),iaLocation.getFloorCertainty(),
+                                    iaLocation.getFloorLevel(),currentDistance,currentLocationName));
+                            mTextView.setTextSize(15);
 
-                             mTextView.setText(String.format(Locale.UK, "Latitude: %.8f,\nLongitude: %.8f,\nAccuracy: %.8f,\nCertainty: %.8f,\nLevel: %d, \nDistance: %.8f., \nLocation: %s",
-                                     iaLocation.getLatitude(), iaLocation.getLongitude(),iaLocation.getAccuracy(),iaLocation.getFloorCertainty(),
-                                     iaLocation.getFloorLevel(),currentDistance,currentLocationName));
-                             mTextView.setTextSize(15);
+                            break;//Break as soon as a location is found nearby
+                        }
 
-                             break;//Break as soon as a location is found nearby
-
-                         }
+//                         currentFloorPlanId = myObject.getFloorplanid().trim();
+//                         if (currentFloorPlanId.equalsIgnoreCase(currentId)) {
+//                             String textutternace = myObject.getText();
+//                             String descriptionutternace = myObject.getDescription();
+//                             currentLocationName = myObject.getName();//Always monitor current location name
+//                             locationString = textutternace + "... " + descriptionutternace;
+//
+//                             mTextView.setText(String.format(Locale.UK, "Latitude: %.8f,\nLongitude: %.8f,\nAccuracy: %.8f,\nCertainty: %.8f,\nLevel: %d, \nDistance: %.8f., \nLocation: %s",
+//                                     iaLocation.getLatitude(), iaLocation.getLongitude(),iaLocation.getAccuracy(),iaLocation.getFloorCertainty(),
+//                                     iaLocation.getFloorLevel(),currentDistance,currentLocationName));
+//                             mTextView.setTextSize(15);
+//
+//                             break;//Break as soon as a location is found nearby
+//
+//                         }
                     }
                   }
 
@@ -429,7 +440,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
 
         if (onLocationChangeFlag){
-        mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+       // mIALocationManager.requestLocationUpdates(request, mIALocationListener);
+            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+
         }
 
         if(mPlayer != null)
@@ -903,10 +916,12 @@ public class MainActivity extends AppCompatActivity {
 
                     switch (utteranceID) {
                         case "OnInitialization"://Floor description
+                            //mIALocationManager.requestLocationUpdates(request, mIALocationListener);
                             mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                             break;
                         case "OnLocationChanged"://Location description
-                            mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
+                            //mIALocationManager.requestLocationUpdates(request, mIALocationListener);
+                           mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                             break;
                         case "OnLocationChangedStart"://Location description
                             startOfRoute = false;
@@ -922,6 +937,7 @@ public class MainActivity extends AppCompatActivity {
                             duringRoute = false;
                             firstTextFlag = false;
                             secondTextFlag = false;
+                            //mIALocationManager.requestLocationUpdates(request, mIALocationListener);
                             mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                             break;
                         case "OnChoosingRoute":
@@ -961,6 +977,7 @@ public class MainActivity extends AppCompatActivity {
                             startTextFlag = false;
                             firstTextFlag = false;
                             secondTextFlag = true;
+                           // mIALocationManager.requestLocationUpdates(request, mIALocationListener);
                             mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                             break;
                         case "OnEndRoute":
@@ -992,8 +1009,12 @@ public class MainActivity extends AppCompatActivity {
                         case "RouteOK":
                             playSound(3);
                             if ((!startOfRoute)&(duringRoute)&(!firstTextFlag)&(!secondTextFlag)) {
+                                //firstConfirmFlag = false;
+                                //secondConfirmFlag = false;
                                 mRoute.launchFirstText(currentLocationName);
                             }else if ((!startOfRoute)&(duringRoute)&(firstTextFlag)&(!secondTextFlag)) {
+                                //firstConfirmFlag = false;
+                                //secondConfirmFlag = false;
                                 mRoute.launchSecondText(currentLocationName);
                             }
                             break;
@@ -1145,6 +1166,7 @@ public class MainActivity extends AppCompatActivity {
                 .withAccuracy(DEFAULT_FF_ACCURACY)
                 .withFloorLevel(DEFAULT_FF_FLOOR).build();
         mIALocationManager.setLocation(location);//Explicitly set the the initial fix as specified in configuration file
+        onCreateFlag = false;
     }
 
     /*** Fire an intent to start the voice recognition activity.*/
@@ -1250,7 +1272,7 @@ public class MainActivity extends AppCompatActivity {
                     if (currentFirstName.equalsIgnoreCase(currentLocation.trim())){
                         makeText(MainActivity.this,"Location Correct! You are on your way!!!" , Toast.LENGTH_SHORT).show();
                         //playSound(3);
-                        texttospeech("You are on the correct route. Continue to your destination.", "RouteOK", currentLocation);
+                        texttospeech("You are on the correct route... ", "RouteOK", currentLocation);
                 }else {
                         makeText(MainActivity.this,"Location  Not Correct! Exit Route State!!!" + utteranceID , Toast.LENGTH_SHORT).show();
                         //playSound(4);
@@ -1268,7 +1290,7 @@ public class MainActivity extends AppCompatActivity {
                     if (currentSecondName.equalsIgnoreCase(currentLocation.trim())){
                         makeText(MainActivity.this,"Location Correct! You are on your way!!!" , Toast.LENGTH_SHORT).show();
                         //playSound(3);
-                        texttospeech("You are on the correct route. Continue to your destination.", "RouteOK", currentLocation);
+                        texttospeech("You are on the correct route... ", "RouteOK", currentLocation);
                     }else {
                         makeText(MainActivity.this,"Location Correct! Exit Route State!!!" + utteranceID , Toast.LENGTH_SHORT).show();
                         //playSound(4);
@@ -1540,6 +1562,7 @@ public class MainActivity extends AppCompatActivity {
                         endFlag = false;
                         mRequestStartTime = SystemClock.elapsedRealtime();
                         mIALocationManager.registerRegionListener(mRegionListener);//Listen for location first
+                        //mIALocationManager.requestLocationUpdates(request, mIALocationListener);
                         mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
                         //String initString = initializeTTS(id);//Initialize text to speech
                         //texttospeech(initString,"OnInitialization","");//Launch "OnInitialization" state
@@ -1548,10 +1571,14 @@ public class MainActivity extends AppCompatActivity {
 
             }else if (!endFlag & firstConfirmFlag & !secondConfirmFlag){
                 firstConfirmFlag = false;
+                secondConfirmFlag = false;
+                //mIALocationManager.requestLocationUpdates(request, mIALocationListener);
                 mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
 
             }else if (!endFlag & !firstConfirmFlag & secondConfirmFlag){
                 secondConfirmFlag = false;
+                firstConfirmFlag = false;
+               // mIALocationManager.requestLocationUpdates(request, mIALocationListener);
                 mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
             }
             return super.onDoubleTap(e);
@@ -1574,7 +1601,7 @@ public class MainActivity extends AppCompatActivity {
             if(e2.getX() > e1.getX()){
                 if(mPlayer != null && mPlayer.isPlaying())//Action when swiping to the RIGHT
                 {
-                    //mPlayer.seekTo(duration);//Action when user swipes to the Right - DO NOT IMPLEMENT FOR TRIAL
+                    mPlayer.seekTo(duration);//Action when user swipes to the Right - DO NOT IMPLEMENT FOR TRIAL
                 }
 
             } else if (e2.getX() < e1.getX()){//Action when swiping to the LEFT
@@ -1655,6 +1682,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (myInput.equals("yes go on")){//NOT USED YET
                 duringRoute = true;
+               //mIALocationManager.requestLocationUpdates(request, mIALocationListener);
                 mIALocationManager.requestLocationUpdates(IALocationRequest.create(), mIALocationListener);
 
             }else if (match){
