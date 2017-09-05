@@ -4,7 +4,7 @@
 
   <parameter>
     <defaultinterval>100</defaultinterval>                    <!-->Was 100<-->
-    <defaultdisplacement>0.3</defaultdisplacement>           <!-->Was 0.8<-->
+    <defaultdisplacement>0.1</defaultdisplacement>           <!-->Was 0.8<-->
     <defaultaccuracy>5</defaultaccuracy>           <!-->Was 5<-->
     <defaultcurrentdistance>2.5</defaultcurrentdistance>     <!-->Was 2.5<-->
     <defaultfloorcertainty>0.7</defaultfloorcertainty>
@@ -13,8 +13,8 @@
     <firstfixlatitude>51.52231720</firstfixlatitude>   <!-->First Fix Stairs E...51.52231720; -0.13089649<-->
     <firstfixlongitude>-0.13089649</firstfixlongitude>
     <firstfixfloor>2</firstfixfloor>
-    <firstfixaccuracy>5</firstfixaccuracy>
-    <maxduration>10</maxduration>
+    <firstfixaccuracy>20</firstfixaccuracy>
+    <maxduration>30</maxduration>
   </parameter>
 
   <!-->////////////////////////////////////////////////////////////////////////////////////////////////////////////////<-->
