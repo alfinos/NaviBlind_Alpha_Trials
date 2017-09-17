@@ -1,3 +1,6 @@
+// Note that most of the DotImage code is inspired and adopted from the Indoor Atlas SDK website.
+// Note also that this code is not part of the main use case 'Navigate Route' and therefore not to be considered as
+// integral to the overall project - in fact this use case is not well documented in the project report
 package com.example.salfino.naviblind_alpha;
 
 import android.content.Context;
