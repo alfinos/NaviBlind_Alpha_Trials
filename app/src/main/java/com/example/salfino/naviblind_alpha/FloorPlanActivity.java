@@ -1,4 +1,9 @@
+// Note that most of the FloorPlanActivity code is inspired and adopted from the Indoor Atlas SDK website.
+// Note also that this code is not part of the main use case 'Navigate Route' and therefore not to be considered as
+// integral to the overall project - in fact this use case is not well documented in the project report
 package com.example.salfino.naviblind_alpha;
+
+//This class is adopted from Indoor Atlas SDK example application and is used mostly for debug and is not central to the project
 
 import android.Manifest;
 import android.app.DownloadManager;
