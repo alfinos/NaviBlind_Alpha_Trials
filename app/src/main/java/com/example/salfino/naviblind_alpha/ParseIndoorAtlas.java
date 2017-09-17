@@ -1,4 +1,8 @@
-
+// Note that the majority of the ParseIndoorAtlas code is my own work with minor aspects inspired from
+// the XMLPull API which has been used to handle the XML parsing
+// Note also that this code is core to the main use case 'Navigate Route' and therefore
+// integral to the overall project - in fact this use case is comprehensively documented in the project report
+// The XMLPull API has been used to handle the XML parsing
 package com.example.salfino.naviblind_alpha;
 
 import android.util.Log;
