@@ -1,3 +1,10 @@
+// Note that the majority of the MainActivity code is my own work with minor aspects inspired from the Indoor Atlas SDK website.
+// Other inspiration has been taken from API documentation for individual objects such as the TTS Engine, Media Player,
+// Speech Recognizer, Async Task and Gesture functionality, residing on the Android Developer Website
+// Additionally, the XMLPull API has been used to handle the XML parsing
+// Note also that this code is core to the main use case 'Navigate Route' and therefore
+// integral to the overall project - in fact this use case is comprehensively documented in the project report
+
 package com.example.salfino.naviblind_alpha;
 
 import android.Manifest;
